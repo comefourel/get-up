@@ -125,6 +125,13 @@ h1,h2,h3{font-family:'Space Grotesk',sans-serif;margin:0;letter-spacing:-.01em}
 .card .meta{margin-top:7px;display:flex;gap:12px;flex-wrap:wrap;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--mute)}
 .card .meta b{color:var(--ink);font-weight:500}
 .open-hint{float:right;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--sea);letter-spacing:.08em}
+/* code d'entrainement Garmin, lisible sans ouvrir la fiche */
+.wcode{
+  display:inline-block;margin-top:8px;padding:3px 9px;border-radius:3px;
+  background:var(--signal);color:var(--paper);
+  font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;letter-spacing:.08em;
+}
+.session .card .wcode{background:var(--signal);color:var(--paper)}
 
 /* session block breaks the line */
 .slot.session::before{background:var(--signal);width:18px;left:-24px;height:2px}
@@ -494,6 +501,18 @@ button.ing:focus-visible{outline:2px solid var(--signal);outline-offset:1px}
 .sv-flag.ok{border-left-color:var(--sea);background:var(--sea-soft)}
 
 .sv-note{font-size:13.5px;color:var(--mute);line-height:1.5;margin-top:10px}
+
+/* fiche de seance : la valeur peut etre longue, elle passe a la ligne
+   au lieu d'ecraser son libelle */
+.wbody{position:relative}
+.wrow{display:flex;justify-content:space-between;gap:16px;align-items:baseline;
+  padding:9px 0;border-bottom:1px solid rgba(195,204,196,.55);font-size:15px}
+.wrow:last-of-type{border-bottom:0}
+.wrow .q{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--mute);
+  text-align:right;flex:0 1 auto;min-width:0}
+.wrow .l{flex:1 1 auto;min-width:0}
+.wrow.pro .l{font-weight:600}
+.wrow.pro .q{color:var(--sea)}
 .sv-tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
 
 @media (max-width:520px){
@@ -578,18 +597,6 @@ button.ing:focus-visible{outline:2px solid var(--signal);outline-offset:1px}
   </div>
 </section>
 
-<!-- ============ RÈGLES ============ -->
-<section class="panel" id="p-regles">
-  <div class="wrap">
-    <div class="shead"><h2>Règles</h2><p>Ce qui ne change jamais, quelle que soit la semaine.</p></div>
-    <div id="rules"></div>
-    <div class="shead" style="margin-top:14px"><h2>Semaine chargée</h2><p>L'eau ne saute jamais en dernier.</p></div>
-    <table class="tbl" id="fallback"></table>
-    <div class="warn" style="margin-top:20px">
-      <b>Les repas ne se réduisent pas quand les séances se réduisent.</b> C'est le moment où tu es le plus fatigué — et le mécanisme exact qui produit un déficit en janvier.
-    </div>
-  </div>
-</section>
 
 <!-- ============ SUIVI ============ -->
 <section class="panel" id="p-suivi">
@@ -600,6 +607,7 @@ button.ing:focus-visible{outline:2px solid var(--signal);outline-offset:1px}
     </div>
     <div id="sv-poids" class="sv-block"></div>
     <div id="sv-seances" class="sv-block"></div>
+    <div id="sv-arbitrage" class="sv-block"></div>
     <div id="sv-ressenti" class="sv-block"></div>
     <div id="sv-tests" class="sv-block"></div>
     <div id="sv-sang" class="sv-block"></div>
@@ -1019,20 +1027,32 @@ function drawDay(){
     if(rec&&!s.flat&&!s.sess){meta.push(`<b>${rec.kcal}</b> kcal`);meta.push(`<b>${rec.p}</b> g prot.`);meta.push(`${rec.t} min`);}
     else if(k>0)meta.push(`<b>${k}</b> kcal`);
     if(s.note)meta.push(s.note);
+    /* seance : on va chercher la bonne version dans la phase en cours */
+    const w=s.sess?seanceDuJour(cur):null;
+    if(w){
+      const vol=volumeAffiche(w,cur);
+      if(vol)meta.unshift(vol);
+      meta.unshift(w.dur);
+    }
+    const clic = rec ? `data-rec="${s.r}"` : (w ? 'data-seance="1"' : '');
+    const btn = (rec||w) ? 'button' : 'div';
     return `<div class="slot${s.sess?' session':''}">
       <span class="clock mono">${s.h}</span>
-      <${rec?'button':'div'} class="card${rec?'':' static'}"${rec?` data-rec="${s.r}"`:''}>
+      <${btn} class="card${(rec||w)?'':' static'}" ${clic}>
         ${rec?'<span class="open-hint">RECETTE →</span>':''}
+        ${w?'<span class="open-hint">SÉANCE →</span>':''}
         <span class="role">${esc(s.role)}</span>
-        <span class="title">${esc(title)}</span>
+        <span class="title">${w?esc(w.t):esc(title)}</span>
+        ${w?`<span class="wcode">${esc(w.code)}</span>`:''}
         ${meta.length?`<span class="meta">${meta.map(m=>`<span>${m}</span>`).join('')}</span>`:''}
-      </${rec?'button':'div'}></div>`;
+      </${btn}></div>`;
   }).join('');
   $('#dayview').innerHTML=`
     <div class="dayhead">
-      <div><h2>${d.n}</h2><span class="tag">${esc(d.title)}</span></div>
+      <div><h2>${d.n}</h2><span class="tag">${esc(d.title)}${phaseTag(cur)}</span></div>
       <div class="target"><b>${d.kcal.toLocaleString('fr-FR')}</b><span>KCAL CIBLE</span></div>
     </div>
+    ${avantCycle()?`<div class="warn"><b>Le cycle démarre le lundi 7 septembre.</b> ${avantCycle()} — les séances apparaîtront à partir de cette date.</div>`:''}
     ${d.warn?`<div class="warn">${d.warn}</div>`:''}
     <div class="timeline"><div class="tide" id="tide"></div>${slots}</div>`;
   requestAnimationFrame(()=>{const t=$('#tide');if(t)t.style.height=Math.min(100,run/tot*100)+'%';});
@@ -1503,6 +1523,27 @@ function svChartSeances(barres,prevu){
    ============================================================ */
 const SV_NIV=[ [1,'Frais'], [2,'Lourd'], [3,'Cassé'] ];
 
+/* ============================================================
+   BLOC 2 bis — ARBITRAGE
+   L'ancien onglet Regles etait un doublon : trois de ses cinq
+   regles s'affichent deja dans la vue Jour, au bon moment.
+   Seul ce tableau meritait de rester, et sa place est ici :
+   c'est ou tu constates 4 sur 6 que tu decides quoi couper.
+   ============================================================ */
+function svDrawArbitrage(){
+  $('#sv-arbitrage').innerHTML=`
+  <div class="sv-head">
+    <div><span class="eyebrow">Bloc 02 bis</span><h3>Semaine chargée</h3></div>
+    <span class="rt">l'eau ne saute<br>jamais en dernier</span>
+  </div>
+  <div class="sv-card" style="padding-top:6px">
+    <table class="tbl">${FALLBACK.map(f=>`<tr><td>${esc(f[0])}</td><td>${esc(f[1])}</td></tr>`).join('')}</table>
+  </div>
+  <div class="warn" style="margin-top:0">
+    <b>Les repas ne se réduisent pas quand les séances se réduisent.</b> C'est le moment où tu es le plus fatigué — et le mécanisme exact qui produit un déficit en janvier.
+  </div>`;
+}
+
 function svDrawRessenti(){
   const t=svToday();
   /* J+1 des deux séances dures : samedi (après vendredi), lundi (après dimanche) */
@@ -1701,9 +1742,10 @@ function svDrawData(){
     <div class="sv-tools">
       <button class="sv-btn ghost" data-sv="export">Exporter un fichier</button>
       <button class="sv-btn ghost" data-sv="import">Réimporter</button>
+      <button class="sv-btn ghost" data-sv="ics">Séances → agenda</button>
       <input type="file" id="sv-file" accept="application/json,.json" style="display:none">
     </div>
-    <div class="sv-note">Les données vivent dans le navigateur de ce téléphone, nulle part ailleurs. Elles survivent aux mises à jour de l'app, mais pas à un effacement de l'historique Safari ni à un changement de téléphone. Exporte une fois par mois — le fichier part dans Fichiers.</div>
+    <div class="sv-note">« Séances → agenda » génère un fichier de toutes tes séances jusqu'en avril, à importer une fois dans Google Agenda. Aucune synchronisation : si le programme change, tu réexportes.<br><br>Les données vivent dans le navigateur de ce téléphone, nulle part ailleurs. Elles survivent aux mises à jour de l'app, mais pas à un effacement de l'historique Safari ni à un changement de téléphone. Exporte une fois par mois — le fichier part dans Fichiers.</div>
   </div>`;
 }
 
@@ -1711,7 +1753,7 @@ function svDrawData(){
    RENDU + ÉVÉNEMENTS
    ============================================================ */
 function drawSuivi(){
-  svDrawPoids(); svDrawSeances(); svDrawRessenti();
+  svDrawPoids(); svDrawSeances(); svDrawArbitrage(); svDrawRessenti();
   svDrawTests(); svDrawSang(); svDrawData();
 }
 
@@ -1742,6 +1784,11 @@ document.addEventListener('click', e=>{
     svSave(); svDrawRessenti(); return;
   }
   if(a==='export'){ svExport(); return; }
+  if(a==='ics'){
+    const n=exportAgenda();
+    alert(n+" séances exportées.\n\nOuvre le fichier depuis Fichiers, puis importe-le dans Google Agenda via calendar.google.com → Paramètres → Importer.");
+    return;
+  }
   if(a==='import'){ document.getElementById('sv-file').click(); return; }
 });
 
@@ -1785,13 +1832,317 @@ document.addEventListener('change', e=>{
   r.readAsText(f);
 });
 
+/* ============================================================
+   ENTRAÎNEMENT — phases, bibliothèque de séances, fiche
+   ------------------------------------------------------------
+   L'app connaît la date, donc elle sert la bonne version de
+   chaque séance. Rien à synchroniser : le programme est fixe.
+   ============================================================ */
+
+const CYCLE_DEBUT = '2026-09-07';          // lundi 7 septembre 2026
+
+const PHASES = [
+  { n:0, nom:'Reprise et diagnostic', f:'2026-09-07', t:'2026-10-04' },
+  { n:1, nom:'Fondation',             f:'2026-10-05', t:'2026-11-29' },
+  { n:2, nom:'Force',                 f:'2026-11-30', t:'2026-12-27' },
+  { n:3, nom:'Maintien minimal',      f:'2026-12-28', t:'2027-01-31' },
+  { n:4, nom:'Relance',               f:'2027-02-01', t:'2027-02-28' },
+  { n:5, nom:'Spécifique',            f:'2027-03-01', t:'2027-04-04' },
+  { n:6, nom:'Affûtage',              f:'2027-04-05', t:'2027-04-24' }
+];
+
+/* grille jour × phase — index 0 = lundi … 6 = dimanche
+   null = aucune séance prévue dans cette phase */
+const GRILLE = {
+  0:['N0','R-A','C1','R-B','N5',null,'MER'],
+  1:['N1','R-A','C2','R-B','N5',null,'MER'],
+  2:['N2','R-A','C3','R-B','N5',null,'MER'],
+  3:['N3',null,'C-JAN',null,null,null,null],
+  4:['N1','R-A','C4','R-B','N5',null,'MER'],
+  5:['N4','R-PPG','C5','R-PPG','N4',null,'MER'],
+  6:['N3','R-PPG','C4',null,'N3',null,'MER-L']
+};
+
+/* rotation des dimanches, sur quatre semaines */
+const MER_ROT = ['MER1','MER2','MER3','MER4'];
+
+/* ---------- bibliothèque ---------- */
+const W = {
+
+/* ---- natation ---- */
+'N0':{code:'N0',t:'Reprise',type:'Natation piscine',dur:'45 min',vol:'1200 → 1600 m',garmin:'N0',
+  intro:"Le risque des premières semaines n'est pas le manque de volume, c'est l'épaule. Huit mois sans nager puis 2400 m d'un coup, c'est une tendinopathie en octobre.",
+  bloc:[['Échauffement','300 m'],['6 × 50 m','éducatif · repos 20 s'],['400 m','crawl souple'],
+        ['200 m','palmes'],['Retour au calme','100 m']],
+  note:"La distance du bloc central monte d'environ 10 % chaque semaine. Modifie-la sur Garmin le lundi matin."},
+
+'N1':{code:'N1',t:'Fondation',type:'Natation piscine',dur:'60 min',vol:'2600 m',garmin:'Fondation 2400',
+  intro:"Les palmes sont obligatoires sur toutes les épreuves d'eau. Le palmage est piloté par la hanche et la cheville — ce n'est pas du crawl accéléré, il se construit dès maintenant.",
+  bloc:[['Échauffement','400 m'],['10 × 50 m','éducatif · repos 20 s'],['8 × 100 m','crawl allure 400 · repos 15 s'],
+        ['6 × 100 m','PALMES progressif · repos 20 s'],['300 m','PALMES ondulations et battements dos'],
+        ['Retour au calme','200 m']],
+  note:"Le nom Garmin dit 2400, la séance en fait 2600. Le nom est faux, la séance est juste."},
+
+'N2':{code:'N2',t:'Force décembre',type:'Natation piscine',dur:'45 min',vol:'1700 m',garmin:'N2',
+  intro:"Décembre est un bloc de force. La natation garde sa fréquence mais perd du volume — séries plus courtes, plus rapides.",
+  bloc:[['Échauffement','300 m'],['12 × 50 m','PALMES vite · repos 20 s'],
+        ['6 × 100 m','crawl vite · repos 30 s'],['Retour au calme','200 m']]},
+
+'N3':{code:'N3',t:'Janvier',type:'Natation piscine',dur:'40 min',vol:'1500 m',garmin:'N3',
+  intro:"Volume supprimé, intensité maintenue. Quatre semaines sans nager après huit mois d'arrêt te ramèneraient au point de départ — c'est la séance qui ne saute pas.",
+  bloc:[['Échauffement','300 m'],['8 × 50 m','PALMES vite · repos 15 s'],
+        ['6 × 100 m','crawl soutenu · repos 20 s'],['Retour au calme','200 m']]},
+
+'N4':{code:'N4',t:'Spécifique mars',type:'Natation piscine',dur:'70 min',vol:'2800 m',garmin:'N4',
+  intro:"Le chaussage de palmes hors de l'eau est le geste qui coûte des secondes le jour J, et le seul endroit du programme où tu peux le répéter à sec.",
+  bloc:[['Échauffement','400 m'],['12 × 50 m','PALMES vite · départ toutes les 1 min'],
+        ['8 × 50 m','sprint · chaussage hors bassin avant chaque départ · repos 40 s'],
+        ['6 × 200 m','PALMES allure course · repos 30 s'],['Retour au calme','200 m']],
+  note:"Vérifie que ta piscine te laisse sortir et rentrer répétitivement. Sinon, chaussage assis sur le bord."},
+
+'N5':{code:'N5',t:'Piscine SNSM',type:'Natation piscine',dur:'2 h',vol:'1900 m',garmin:'N5',
+  intro:"Séance encadrée, 20h–22h. Le contenu ne t'appartient pas entièrement — l'entraînement Garmin sert de trame si la séance laisse du temps libre.",
+  bloc:[['Échauffement','300 m'],['12 × 50 m','PALMES vite · repos 20 s'],
+        ['6 × 100 m','crawl vite · repos 30 s'],['Retour au calme','200 m']],
+  note:"Gourde au bord du bassin. L'immersion supprime la sensation de soif et augmente la production d'urine — tu ne sentiras rien, bois quand même."},
+
+/* ---- course ---- */
+'C1':{code:'C1',t:'Endurance cadence',type:'Course à pied',dur:'35 min',garmin:'C1',
+  intro:"La cadence est le meilleur levier anti-périostite disponible, et il ne coûte rien. Vise 175–180 pas/min.",
+  bloc:[['Échauffement','5 min souple'],['30–35 min','continu facile, sol souple'],
+        ['6 × 80 m','lignes droites en accélération'],['Retour au calme','5 min']]},
+
+'C2':{code:'C2',t:'Fractionné 4 min',type:'Course à pied',dur:'50 min',garmin:'C2a / C2b / C2c',
+  intro:"Le volume monte à l'intérieur de la phase : trois répétitions en octobre, quatre fin octobre, cinq mi-novembre.",
+  bloc:[['Échauffement','15 min'],['3 à 5 × 4 min','allure soutenue · récup 3 min'],['Retour au calme','10 min']],
+  note:"C2a du 5 au 19 octobre, C2b du 26 octobre au 9 novembre, C2c du 16 au 29 novembre."},
+
+'C3':{code:'C3',t:'6 × 3 min',type:'Course à pied',dur:'50 min',garmin:'C3',
+  intro:"Décembre : séries plus courtes et plus rapides que la fondation.",
+  bloc:[['Échauffement','15 min'],['6 × 3 min','rapide · récup 2 min'],['Retour au calme','10 min']]},
+
+'C-JAN':{code:'C-JAN',t:'Janvier — court',type:'Course à pied',dur:'30 min',garmin:'à créer',
+  intro:"Janvier est un mois d'examens, de jurys et de soutenance. Deux séances, intensité maintenue, volume supprimé.",
+  bloc:[['Échauffement','8 min'],['8 × 1 min','rapide · récup 1 min'],['Retour au calme','6 min']],
+  note:"Cet entraînement n'existe pas encore sur Garmin. Le plus proche est C4, qu'il faut raccourcir — ou lance une course libre au chrono."},
+
+'C4':{code:'C4',t:'30-15',type:'Course à pied',dur:'45 min',garmin:'C4',
+  intro:"Ton tibia sort de quatre semaines molles : c'est la fenêtre de périostite du cycle. La première semaine de février reste en continu facile avant de passer à ce format.",
+  bloc:[['Échauffement','15 min'],['2 blocs de 8 ×','30 s vite / 30 s lent'],
+        ['Entre les blocs','3 min de récupération'],['Retour au calme','10 min']]},
+
+'C5':{code:'C5',t:'Navettes sable',type:'Course à pied',dur:'45 min',garmin:'C5',
+  intro:"Format 20 m, structure Luc Léger. Ce n'est plus une nouveauté à ce stade : tu cours sur le sable depuis octobre, c'est tout l'intérêt du réaménagement.",
+  bloc:[['Échauffement','15 min'],['Navettes 20 m','structure Luc Léger progressive'],['Retour au calme','10 min']]},
+
+/* ---- musculation ---- */
+'R-A':{code:'R-A',t:'Renfo A — poussée',type:'Musculation',dur:'50 min',garmin:'R-A',
+  intro:"Poussée, haut du corps, verticalité. Matériel : haltères réglables, barre EZ, poignées de pompe.",
+  bloc:[['Pompes déclinées sur poignées','4 × 10'],['Développé militaire haltères','4 × 8'],
+        ['Pullover haltère au sol','4 × 12'],['Floor press haltères','3 × 10'],
+        ['Élévations latérales','3 × 12'],['Gainage anti-rotation','3 × 30 s / côté'],
+        ['Mollets debout jambes tendues','3 × 20 · prophylaxie'],
+        ['Rotations externes élastique','3 × 15 · prophylaxie']],
+  note:"Aucune douche froide ni bain froid ce soir. L'immersion froide post-musculation émousse les adaptations de force."},
+
+'R-B':{code:'R-B',t:'Renfo B — tirage',type:'Musculation',dur:'50 min',garmin:'R-B',
+  intro:"Tirage, chaîne postérieure, explosivité. Les relevés et le get-up sont en premier volontairement : ils demandent un système nerveux frais.",
+  bloc:[['Relevés sol-debout explosifs','5 × 6'],['Turkish get-up','3 × 3 / côté'],
+        ['Soulevé de terre roumain','4 × 10'],['Rowing haltère unilatéral','4 × 10'],
+        ['Rowing buste penché EZ','3 × 12'],['Split squat sur marche','3 × 10 / jambe'],
+        ['Pont fessier une jambe','3 × 12'],['Curl marteau','3 × 12'],
+        ['Isométrie coudes 90°','3 × 40 s'],
+        ['Soléaire en fente','3 × 15 / jambe · prophylaxie'],
+        ['Y-T-W au sol','2 × 10 · prophylaxie']],
+  note:"Aucune douche froide ni bain froid ce soir. Sur Garmin, les mouvements unilatéraux ont leurs séries doublées — tu alternes manuellement."},
+
+'R-PPG':{code:'R-PPG',t:'Circuit spécifique',type:'Musculation',dur:'35 min',garmin:'R-PPG',
+  intro:"Charges réduites, densité élevée, enchaînement sans récupération complète. C'est le format de l'épreuve, pas celui de la salle.",
+  bloc:[['Squats','15'],['Pompes','12'],['Burpees','10'],['Relevés sol-debout','8'],
+        ['Repos entre les tours','90 s']],
+  note:"5 tours. Échauffement 8 min avant, retour au calme 5 min après."},
+
+/* ---- mer, dimanche ---- */
+'MER1':{code:'MER',t:'Mer — volume',type:'Mer, Saint-Malo',dur:'75–90 min',garmin:'profil SwimRun',
+  intro:"Rotation 1 sur 4. La montre enregistre et découpe, elle ne dicte rien : il n'existe pas d'entraînement structuré en eau libre sur la 255.",
+  bloc:[['3 × bloc','800 m course – 400 m nage palmes – 800 m course'],
+        ['Sable, en fin de séance','8 min en octobre → 25 min en février']],
+  note:"Thermos avant de te rhabiller. La température centrale continue de chuter environ 15 minutes après la sortie de l'eau."},
+
+'MER2':{code:'MER',t:'Mer — technique',type:'Mer, Saint-Malo',dur:'75–90 min',garmin:'profil SwimRun',
+  intro:"Rotation 2 sur 4. Aucune intensité, que du geste.",
+  bloc:[['Entrées et sorties d\'eau','répétées'],['Chaussages de palmes','× 10'],
+        ['Tractions de victime','sur sable'],['Bodysurf','prise de vague'],
+        ['Sable, en fin de séance','8 min en octobre → 25 min en février']],
+  note:"Thermos avant de te rhabiller."},
+
+'MER3':{code:'MER',t:'Mer — intensité',type:'Mer, Saint-Malo',dur:'75–90 min',garmin:'profil SwimRun',
+  intro:"Rotation 3 sur 4. C'est la séance la plus proche du format de l'épreuve.",
+  bloc:[['5 × bloc','burpees – 300 m course – 200 m nage – 300 m course'],
+        ['Récupération','2 min entre les blocs'],
+        ['Sable, en fin de séance','8 min en octobre → 25 min en février']],
+  note:"Thermos avant de te rhabiller."},
+
+'MER4':{code:'MER',t:'Mer — test',type:'Mer, Saint-Malo',dur:'75–90 min',garmin:'profil SwimRun',
+  intro:"Rotation 4 sur 4. C'est ici que se mesure l'indicateur principal du cycle : l'écart entre les deux blocs, pas le chrono absolu.",
+  bloc:[['Bloc 1','course – nage – course, chronométré'],
+        ['Récupération active','15 min'],
+        ['Bloc 2','course – nage – course, chronométré']],
+  note:"Note les deux temps dans l'onglet Suivi. Cible : moins de 12 % fin novembre, 8 % fin février, 5 % fin mars."},
+
+'MER-L':{code:'MER',t:'Mer — affûtage',type:'Mer, Saint-Malo',dur:'45 min',garmin:'profil SwimRun',
+  intro:"Deux semaines avant l'échéance. Entretenir la sensation d'eau froide et de combinaison, rien d'autre.",
+  bloc:[['Nage souple','15 min en combinaison'],['Entrées et sorties','quelques répétitions'],
+        ['Sable','10 min facile']],
+  note:"Arriver affûté trois jours trop tôt ne coûte presque rien ; l'inverse, oui."}
+};
+
+/* ---------- moteur ---------- */
+function wIso(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function wFrom(s){const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)}
+
+function phaseAt(date){
+  const k=wIso(date);
+  for(const p of PHASES) if(k>=p.f && k<=p.t) return p;
+  return k < PHASES[0].f ? {n:-1,nom:'Avant le cycle'} : {n:99,nom:'Après les sélections'};
+}
+/* numéro de semaine depuis le début du cycle, 0 pour la première */
+function semaineCycle(date){
+  return Math.floor((date - wFrom(CYCLE_DEBUT))/(7*864e5));
+}
+/* date réelle du jour affiché, dans la semaine en cours */
+function dateDuJour(i){
+  const t=new Date(); t.setHours(0,0,0,0);
+  const j=t.getDay(); const lundi=new Date(t);
+  lundi.setDate(t.getDate()-(j===0?6:j-1));
+  return new Date(lundi.getFullYear(),lundi.getMonth(),lundi.getDate()+i);
+}
+
+/* code de séance pour le jour i (0=lundi) */
+function seanceCode(i){
+  const d=dateDuJour(i), p=phaseAt(d);
+  if(p.n<0 || p.n>6) return null;
+  let c=GRILLE[p.n][i];
+  if(!c) return null;
+  if(c==='MER'){
+    const s=semaineCycle(d);
+    return MER_ROT[((s%4)+4)%4];
+  }
+  return c;
+}
+
+function seanceDuJour(i){
+  const c=seanceCode(i);
+  return c ? W[c] : null;
+}
+
+/* volume affiché pour N0, qui monte chaque semaine */
+function volumeAffiche(w,i){
+  if(!w) return '';
+  if(w.code!=='N0') return w.vol||'';
+  const s=semaineCycle(dateDuJour(i));
+  return [1200,1300,1450,1600][Math.max(0,Math.min(3,s))]+' m';
+}
+
+/* etiquette de phase affichee dans l'en-tete du jour */
+function phaseTag(i){
+  const p=phaseAt(dateDuJour(i));
+  if(p.n<0||p.n>6) return '';
+  return ' · PHASE '+p.n+' — '+p.nom.toUpperCase();
+}
+/* nombre de jours restants avant le debut du cycle, sinon 0 */
+function avantCycle(){
+  const t=new Date(); t.setHours(0,0,0,0);
+  const d0=wFrom(CYCLE_DEBUT);
+  if(t>=d0) return 0;
+  const j=Math.ceil((d0-t)/864e5);
+  return 'J−'+j;
+}
+
+/* ---------- fiche de séance ---------- */
+function openSeance(i){
+  const w=seanceDuJour(i);
+  if(!w) return;
+  const d=dateDuJour(i), p=phaseAt(d);
+  const vol=volumeAffiche(w,i);
+  $('#sheet').innerHTML=`
+    <div class="body wbody" style="padding-top:26px">
+      <button class="closebtn" id="cl" style="top:14px;right:14px" aria-label="Fermer">✕</button>
+      <span class="eyebrow" style="display:block">${esc(w.type)} · Phase ${p.n} — ${esc(p.nom)}</span>
+      <h3 style="margin-top:6px">${esc(w.t)}</h3>
+      <div class="stats">
+        <div class="stat"><b>${esc(w.code)}</b><span>code</span></div>
+        <div class="stat"><b>${esc(w.dur)}</b><span>durée</span></div>
+        ${vol?`<div class="stat"><b>${esc(vol)}</b><span>volume</span></div>`:''}
+      </div>
+      <div class="origin"><span class="mark">SUR LA MONTRE</span><span>${esc(w.garmin)}</span></div>
+      ${w.intro?`<p style="margin:14px 0 0;font-size:15px;color:var(--mute)">${esc(w.intro)}</p>`:''}
+      <h4>Déroulé</h4>
+      ${w.bloc.map(b=>{
+        const pro=/prophylaxie/.test(b[1]);
+        return `<div class="wrow${pro?' pro':''}"><span class="l">${esc(b[0])}</span><span class="q">${esc(b[1])}</span></div>`;
+      }).join('')}
+      ${w.note?`<div class="tip"><span class="eyebrow">À savoir</span>${esc(w.note)}</div>`:''}
+    </div>`;
+  $('#scrim').classList.add('on');
+  $('#sheet').scrollTop=0;
+  document.body.style.overflow='hidden';
+  $('#cl').focus();
+}
+
+/* ---------- export vers l'agenda ---------- */
+function icsEchap(s){return String(s).replace(/([,;\\])/g,'\\$1').replace(/\n/g,'\\n')}
+function exportAgenda(){
+  const HEURES=['19:00','19:00','19:00','19:00','20:00',null,'10:00'];
+  const DUREES=[60,50,50,50,120,0,90];
+  const L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Get Up//Preparation avril 2027//FR','CALSCALE:GREGORIAN'];
+  const fin=wFrom('2027-04-24');
+  let d=wFrom(CYCLE_DEBUT);
+  const auj=new Date(); auj.setHours(0,0,0,0);
+  if(d<auj){ /* on part du lundi de la semaine en cours */
+    const j=auj.getDay(); d=new Date(auj); d.setDate(auj.getDate()-(j===0?6:j-1));
+  }
+  let n=0;
+  for(; d<=fin; d=new Date(d.getFullYear(),d.getMonth(),d.getDate()+1)){
+    const i=(d.getDay()===0?6:d.getDay()-1);
+    const p=phaseAt(d);
+    if(p.n<0||p.n>6) continue;
+    let c=GRILLE[p.n][i];
+    if(!c) continue;
+    if(c==='MER') c=MER_ROT[((semaineCycle(d)%4)+4)%4];
+    const w=W[c]; if(!w||!HEURES[i]) continue;
+    const [hh,mm]=HEURES[i].split(':').map(Number);
+    const deb=new Date(d.getFullYear(),d.getMonth(),d.getDate(),hh,mm);
+    const f=new Date(+deb+DUREES[i]*60000);
+    const st=x=>x.getFullYear()+String(x.getMonth()+1).padStart(2,'0')+String(x.getDate()).padStart(2,'0')
+              +'T'+String(x.getHours()).padStart(2,'0')+String(x.getMinutes()).padStart(2,'0')+'00';
+    const desc=w.bloc.map(b=>b[0]+' — '+b[1]).join('\n');
+    L.push('BEGIN:VEVENT',
+      'UID:getup-'+wIso(d)+'-'+c+'@comefourel',
+      'DTSTAMP:'+st(new Date()),
+      'DTSTART:'+st(deb),'DTEND:'+st(f),
+      'SUMMARY:'+icsEchap(w.code+' · '+w.t),
+      'LOCATION:'+icsEchap(w.type),
+      'DESCRIPTION:'+icsEchap('Sur la montre : '+w.garmin+'\n\n'+desc),
+      'END:VEVENT');
+    n++;
+  }
+  L.push('END:VCALENDAR');
+  const blob=new Blob([L.join('\r\n')],{type:'text/calendar'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download='get-up-seances.ics';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+  return n;
+}
+
 /* --- nav --- */
 const NAV=[
  ["jour","Jour",'<path d="M3 8h18M7 3v3M17 3v3"/><rect x="3" y="5" width="18" height="16" rx="2"/>'],
  ["recettes","Recettes",'<path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h8M8 17h4"/>'],
  ["courses","Courses",'<path d="M5 7h14l-1.5 12h-11z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/>'],
  ["cuisine","Cuisine",'<path d="M4 13h16"/><path d="M6 13a6 6 0 0 1 12 0"/><path d="M5 17h14"/><path d="M12 7V4"/>'],
- ["regles","Règles",'<circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/>'],
  ["suivi","Suivi",'<path d="M3 16.5l3.2-2.6 2.6 1.6L12.4 10l2.6 1.5L19.5 6"/><path d="M14.6 5.4h5v5"/>']
 ];
 function drawNav(){
@@ -1808,6 +2159,7 @@ document.addEventListener('click',e=>{
   const day=e.target.closest('.daybtn');
   if(day){cur=+day.dataset.i;drawDays();drawDay();return}
   if(e.target.closest('#bk')){goBack();return}
+  if(e.target.closest('[data-seance]')){openSeance(cur);return}
   const rec=e.target.closest('[data-rec]');
   if(rec){
     if(rec.dataset.push)pushRec(rec.dataset.rec);
@@ -1836,7 +2188,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeRec()});
 (async()=>{
   await load();
   await svLoad();
-  drawNav();drawDays();drawDay();drawFilters();drawRecipes();drawShop();drawCook();drawRules();
+  drawNav();drawDays();drawDay();drawFilters();drawRecipes();drawShop();drawCook();
   drawSuivi();
 })();
 
