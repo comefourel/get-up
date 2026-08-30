@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Semaine — préparation avril 2027</title>
+<title>Get Up — préparation avril 2027</title>
 
 <!-- ===== PWA ===== -->
 <link rel="manifest" href="./manifest.webmanifest">
@@ -13,7 +13,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Semaine">
+<meta name="apple-mobile-web-app-title" content="Get Up">
 <link rel="apple-touch-icon" href="./icon-180.png">
 <link rel="icon" href="./icon-192.png">
 
@@ -42,6 +42,9 @@ body{
   line-height:1.5;
   -webkit-font-smoothing:antialiased;
   padding-bottom:96px;
+  /* barre d'etat de l'iPhone : en mode plein ecran la page passe dessous.
+     Cette marge la degage, et vaut zero partout ailleurs. */
+  padding-top:env(safe-area-inset-top,0px);
 }
 .wrap{max-width:760px;margin:0 auto;padding:0 18px}
 
@@ -267,6 +270,7 @@ h1,h2,h3{font-family:'Space Grotesk',sans-serif;margin:0;letter-spacing:-.01em}
   position:fixed;inset:0;background:rgba(16,31,28,.5);z-index:50;
   display:none;align-items:flex-end;justify-content:center;
   backdrop-filter:blur(2px);
+  padding-top:env(safe-area-inset-top,0px);
 }
 .scrim.on{display:flex}
 .sheet{
