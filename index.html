@@ -1,0 +1,1850 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Semaine — préparation avril 2027</title>
+
+<!-- ===== PWA ===== -->
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#101F1C">
+<meta name="description" content="Nutrition, entraînement et suivi — sélections nageur sauveteur Gironde, avril 2027.">
+<!-- iOS : ces balises sont encore nécessaires, le manifeste ne suffit pas -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Semaine">
+<link rel="apple-touch-icon" href="./icon-180.png">
+<link rel="icon" href="./icon-192.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Karla:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --fog:#E6EAE3;
+  --paper:#F7F9F4;
+  --ink:#101F1C;
+  --sea:#0F4C41;
+  --sea-soft:#D7E3DE;
+  --signal:#DD3F14;
+  --mute:#6E7C76;
+  --rule:#C3CCC4;
+  --shadow:0 1px 0 rgba(16,31,28,.06), 0 8px 24px -12px rgba(16,31,28,.28);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--fog);
+  color:var(--ink);
+  font-family:'Karla',system-ui,sans-serif;
+  font-size:16px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  padding-bottom:96px;
+}
+.wrap{max-width:760px;margin:0 auto;padding:0 18px}
+
+/* ---------- type helpers ---------- */
+.mono{font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums}
+.eyebrow{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--mute);
+}
+h1,h2,h3{font-family:'Space Grotesk',sans-serif;margin:0;letter-spacing:-.01em}
+
+/* ---------- masthead ---------- */
+.masthead{padding:26px 0 14px;border-bottom:1.5px solid var(--ink)}
+.masthead h1{font-size:23px;font-weight:700;line-height:1.1}
+.masthead .sub{
+  display:flex;justify-content:space-between;align-items:baseline;
+  gap:12px;margin-top:7px;
+}
+.masthead .sub span{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--mute);letter-spacing:.04em}
+.countdown{color:var(--signal);font-weight:600}
+
+/* ---------- day rail (tide strip) ---------- */
+.dayrow{display:flex;gap:5px;padding:14px 0 4px}
+.daybtn{
+  flex:1;background:none;border:1px solid var(--rule);border-radius:3px;
+  padding:8px 2px 7px;cursor:pointer;font-family:'IBM Plex Mono',monospace;
+  color:var(--mute);font-size:11px;letter-spacing:.06em;
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+  transition:background .15s,color .15s,border-color .15s;
+}
+.daybtn .dot{width:5px;height:5px;border-radius:50%;background:var(--rule)}
+.daybtn[data-load="hard"] .dot{background:var(--signal)}
+.daybtn[data-load="mid"] .dot{background:var(--sea)}
+.daybtn[data-load="easy"] .dot{background:var(--rule)}
+.daybtn:hover{border-color:var(--sea)}
+.daybtn.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.daybtn.on .dot{background:var(--paper)}
+.daybtn:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+
+/* ---------- day header ---------- */
+.dayhead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding:20px 0 6px}
+.dayhead h2{font-size:30px;font-weight:700;line-height:1}
+.dayhead .tag{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mute);letter-spacing:.1em;text-transform:uppercase;margin-top:6px;display:block}
+.target{text-align:right;flex:none}
+.target b{display:block;font-family:'Space Grotesk',sans-serif;font-size:27px;line-height:1;font-weight:700}
+.target span{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--mute);letter-spacing:.1em}
+
+/* ---------- timeline (signature) ---------- */
+.timeline{position:relative;padding:14px 0 8px 62px}
+.timeline::before{
+  content:"";position:absolute;left:46px;top:0;bottom:26px;width:1.5px;background:var(--rule);
+}
+.tide{
+  position:absolute;left:46px;top:0;width:1.5px;background:var(--sea);
+  transition:height 1.1s cubic-bezier(.4,0,.2,1);
+}
+.slot{position:relative;margin-bottom:12px}
+.slot .clock{
+  position:absolute;left:-62px;top:11px;width:40px;text-align:right;
+  font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--mute);
+}
+.slot::before{
+  content:"";position:absolute;left:-17px;top:17px;width:11px;height:1.5px;background:var(--rule);
+}
+.card{
+  background:var(--paper);border:1px solid var(--rule);border-radius:4px;
+  padding:12px 14px;width:100%;text-align:left;cursor:pointer;font:inherit;color:inherit;
+  display:block;transition:border-color .15s,transform .12s;
+  box-shadow:var(--shadow);
+}
+.card:hover{border-color:var(--sea);transform:translateX(2px)}
+.card:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+.card.static{cursor:default}
+.card.static:hover{transform:none;border-color:var(--rule)}
+.card .role{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+.card .title{font-family:'Space Grotesk',sans-serif;font-weight:500;font-size:16.5px;margin-top:3px;line-height:1.25}
+.card .meta{margin-top:7px;display:flex;gap:12px;flex-wrap:wrap;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--mute)}
+.card .meta b{color:var(--ink);font-weight:500}
+.open-hint{float:right;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--sea);letter-spacing:.08em}
+
+/* session block breaks the line */
+.slot.session::before{background:var(--signal);width:18px;left:-24px;height:2px}
+.session .card{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.session .card .role{color:#8FB3AA}
+.session .card .meta{color:#8FB3AA}
+.session .card .meta b{color:var(--paper)}
+.session .card:hover{border-color:var(--signal)}
+
+.warn{
+  margin:6px 0 16px;padding:9px 12px;border-left:2.5px solid var(--signal);
+  background:rgba(221,63,20,.06);font-size:14px;
+}
+.warn b{font-weight:600}
+
+/* ---------- panels / tabs ---------- */
+.panel{display:none}
+.panel.on{display:block;animation:fade .28s ease}
+@keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+
+.nav{
+  position:fixed;left:0;right:0;bottom:0;z-index:40;
+  background:var(--paper);border-top:1.5px solid var(--ink);
+  display:flex;padding:6px 6px calc(6px + env(safe-area-inset-bottom));
+}
+.nav button{
+  flex:1;background:none;border:0;padding:9px 2px;cursor:pointer;
+  font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--mute);border-radius:3px;
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+}
+.nav button svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.6}
+.nav button[data-tab="suivi"] svg{stroke-width:1.5}
+/* six onglets : les libellés doivent tenir sur un écran de téléphone */
+@media (max-width:430px){
+  .nav button{font-size:9px;letter-spacing:.02em;padding:9px 0;gap:4px}
+  .nav button svg{width:17px;height:17px}
+}
+@media (max-width:360px){ .nav button{font-size:8.5px} }
+.nav button.on{color:var(--ink);background:var(--sea-soft)}
+.nav button:focus-visible{outline:2px solid var(--signal);outline-offset:-2px}
+
+/* ---------- section heads ---------- */
+.shead{padding:24px 0 12px;border-bottom:1.5px solid var(--ink);margin-bottom:16px}
+.shead h2{font-size:24px;font-weight:700}
+.shead p{margin:6px 0 0;font-size:14.5px;color:var(--mute);max-width:46ch}
+
+/* ---------- shopping ---------- */
+.budget{display:flex;gap:0;border:1.5px solid var(--ink);border-radius:4px;overflow:hidden;margin-bottom:16px;background:var(--paper)}
+.bud{flex:1;padding:13px 12px;border-right:1px solid var(--rule)}
+.bud:last-child{border-right:0}
+.bud .eyebrow{display:block;font-size:9px;letter-spacing:.1em;line-height:1.3}
+.bud b{display:block;font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:700;line-height:1;margin-top:6px}
+.bud.alt{background:var(--sea-soft)}
+.bud.alt b{color:var(--sea)}
+.bud.tot{background:var(--ink)}
+.bud.tot .eyebrow{color:#8FB3AA}
+.bud.tot b{color:var(--paper)}
+.copybtn{
+  width:100%;margin:2px 0 22px;padding:13px;background:var(--paper);
+  border:1.5px solid var(--ink);border-radius:4px;cursor:pointer;
+  font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink);
+}
+.copybtn:hover{background:var(--sea-soft)}
+.copybtn:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+.item .hit{display:flex;gap:11px;align-items:flex-start;flex:1;cursor:pointer;min-width:0}
+.item .right{display:flex;align-items:center;gap:9px;flex:none}
+.src{
+  background:none;border:1px solid var(--rule);border-radius:20px;padding:3px 9px;cursor:pointer;
+  font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.07em;color:var(--mute);
+  text-transform:uppercase;white-space:nowrap;
+}
+.src.mk{background:var(--sea-soft);border-color:var(--sea);color:var(--sea);font-weight:600}
+.src:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+.pr{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--mute);width:52px;text-align:right;white-space:nowrap}
+.item.done .pr,.item.done .src{opacity:.45}
+.lbl sup{font-size:9px;color:var(--sea)}
+.foot{font-size:12.5px;color:var(--mute);border-top:1px solid var(--rule);padding-top:12px;margin-top:4px}
+.progressbar{height:3px;background:var(--rule);border-radius:2px;overflow:hidden;margin:14px 0 4px}
+.progressbar i{display:block;height:100%;background:var(--sea);width:0;transition:width .3s}
+.progresstxt{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mute);margin-bottom:18px}
+.rayon{margin-bottom:22px}
+.rayon h3{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--sea);padding-bottom:7px;border-bottom:1px solid var(--rule);margin-bottom:4px}
+.item{display:flex;gap:11px;align-items:flex-start;padding:9px 2px;border-bottom:1px solid rgba(195,204,196,.5);cursor:pointer}
+.item:last-child{border-bottom:0}
+.box{
+  flex:none;width:17px;height:17px;border:1.5px solid var(--mute);border-radius:3px;margin-top:2px;
+  display:grid;place-items:center;transition:background .15s,border-color .15s;
+}
+.box svg{width:11px;height:11px;stroke:var(--paper);stroke-width:2.6;fill:none;opacity:0}
+.item.done .box{background:var(--sea);border-color:var(--sea)}
+.item.done .box svg{opacity:1}
+.item.done .lbl{color:var(--mute);text-decoration:line-through}
+.lbl{flex:1;font-size:15px}
+.qty{font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--mute);white-space:nowrap}
+.item.key .lbl{font-weight:600}
+.item.key .qty{color:var(--signal);font-weight:600}
+
+/* ---------- cook sessions ---------- */
+.sesscard{background:var(--paper);border:1px solid var(--rule);border-radius:4px;padding:18px;margin-bottom:20px;box-shadow:var(--shadow)}
+.sesstop{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;border-bottom:1px solid var(--rule);padding-bottom:13px;margin-bottom:4px}
+.sesstop h3{font-size:19px;font-weight:700}
+.sesstop .when{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mute);letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:4px}
+.dur{font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700;line-height:1;text-align:right;flex:none}
+.dur span{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--mute);letter-spacing:.1em;font-weight:400}
+.step{display:flex;gap:14px;padding:11px 0;border-bottom:1px solid rgba(195,204,196,.5);cursor:pointer;align-items:flex-start}
+.step:last-child{border-bottom:0}
+.step .at{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--sea);flex:none;width:52px;padding-top:1px;font-weight:500}
+.step .txt{flex:1;font-size:14.5px}
+.step.done .txt{color:var(--mute);text-decoration:line-through}
+.step.done .at{color:var(--rule)}
+.yield{margin-top:14px;padding-top:13px;border-top:1px solid var(--rule);font-size:14px}
+.yield .eyebrow{display:block;margin-bottom:7px}
+.yield ul{margin:0;padding-left:17px}
+.yield li{margin-bottom:3px}
+
+/* ---------- recipe grid ---------- */
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.chip{
+  background:none;border:1px solid var(--rule);border-radius:20px;padding:6px 13px;cursor:pointer;
+  font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;color:var(--mute);
+}
+.chip.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.chip:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:12px}
+.rcard{
+  background:var(--paper);border:1px solid var(--rule);border-radius:4px;overflow:hidden;
+  cursor:pointer;text-align:left;font:inherit;color:inherit;padding:0;
+  transition:border-color .15s,transform .12s;box-shadow:var(--shadow);
+}
+.rcard:hover{border-color:var(--sea);transform:translateY(-2px)}
+.rcard:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+.thumb{aspect-ratio:16/10;background:var(--sea-soft);display:grid;place-items:center;border-bottom:1px solid var(--rule)}
+.thumb svg{width:100%;height:100%}
+.rbody{padding:12px 13px 14px}
+.rbody .title{font-family:'Space Grotesk',sans-serif;font-weight:500;font-size:15.5px;line-height:1.25}
+.rbody .meta{margin-top:7px;display:flex;gap:11px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mute)}
+.star{color:var(--signal)}
+
+/* ---------- modal ---------- */
+.scrim{
+  position:fixed;inset:0;background:rgba(16,31,28,.5);z-index:50;
+  display:none;align-items:flex-end;justify-content:center;
+  backdrop-filter:blur(2px);
+}
+.scrim.on{display:flex}
+.sheet{
+  background:var(--fog);width:100%;max-width:640px;max-height:92vh;overflow-y:auto;
+  border-radius:10px 10px 0 0;border-top:2px solid var(--ink);
+  animation:up .3s cubic-bezier(.32,.72,0,1);
+  padding-bottom:calc(28px + env(safe-area-inset-bottom));
+}
+@keyframes up{from{transform:translateY(24px);opacity:.4}to{transform:none;opacity:1}}
+.sheet .hero{aspect-ratio:2/1;background:var(--sea-soft);border-bottom:1.5px solid var(--ink);position:relative}
+.sheet .hero svg{width:100%;height:100%}
+.closebtn{
+  position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;
+  background:var(--paper);border:1.5px solid var(--ink);cursor:pointer;
+  display:grid;place-items:center;font-size:17px;line-height:1;font-family:'Karla',sans-serif;
+}
+.sheet .body{padding:20px 22px 8px}
+.sheet h3{font-size:25px;font-weight:700;line-height:1.12}
+.stats{display:flex;gap:0;margin:16px 0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.stat{flex:1;padding:11px 0;border-right:1px solid var(--rule)}
+.stat:last-child{border-right:0}
+.stat b{display:block;font-family:'Space Grotesk',sans-serif;font-size:19px;font-weight:700;line-height:1}
+.stat span{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--mute);letter-spacing:.1em;text-transform:uppercase}
+.sheet h4{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--sea);margin:22px 0 9px}
+.ing{display:flex;justify-content:space-between;gap:14px;padding:7px 0;border-bottom:1px solid rgba(195,204,196,.55);font-size:15px;align-items:baseline}
+.ing:last-of-type{border-bottom:0}
+.ing .q{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--mute);white-space:nowrap}
+button.ing{width:100%;background:none;border-top:0;border-left:0;border-right:0;font:inherit;color:inherit;text-align:left;cursor:pointer;border-radius:0}
+button.ing .nm{color:var(--sea);font-weight:600;text-decoration:underline;text-decoration-color:var(--rule);text-underline-offset:3px}
+button.ing:hover .nm{text-decoration-color:var(--sea)}
+button.ing .arrow{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--sea);margin-left:6px}
+button.ing:focus-visible{outline:2px solid var(--signal);outline-offset:1px}
+
+/* bandeau d'origine */
+.origin{
+  display:flex;gap:10px;align-items:flex-start;
+  margin:0 0 4px;padding:11px 13px;border-radius:4px;
+  background:var(--sea-soft);font-size:14px;line-height:1.4;
+}
+.origin .mark{
+  font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;
+  color:var(--sea);flex:none;padding-top:2px;font-weight:600;
+}
+.origin.out{background:none;border:1px solid var(--rule)}
+.origin.out .mark{color:var(--mute)}
+.backbtn{
+  position:absolute;top:12px;left:12px;height:34px;padding:0 13px;border-radius:17px;
+  background:var(--paper);border:1.5px solid var(--ink);cursor:pointer;
+  font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;
+}
+.sheet ol{margin:0;padding-left:0;counter-reset:s;list-style:none}
+.sheet ol li{counter-increment:s;position:relative;padding:0 0 13px 32px;font-size:15px}
+.sheet ol li::before{
+  content:counter(s);position:absolute;left:0;top:1px;
+  font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--sea);font-weight:600;
+  border:1px solid var(--sea);border-radius:50%;width:19px;height:19px;display:grid;place-items:center;
+}
+.tip{margin-top:6px;padding:12px 14px;background:var(--sea-soft);border-radius:4px;font-size:14.5px}
+.tip .eyebrow{display:block;margin-bottom:5px;color:var(--sea)}
+.err{margin-top:12px;padding:12px 14px;border-left:2.5px solid var(--signal);background:rgba(221,63,20,.07);font-size:14.5px}
+
+/* ---------- rules panel ---------- */
+.rule-item{display:flex;gap:15px;padding:15px 0;border-bottom:1px solid var(--rule)}
+.rule-item:last-child{border-bottom:0}
+.rule-item .n{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--signal);flex:none;padding-top:2px;font-weight:600}
+.rule-item p{margin:4px 0 0;font-size:14.5px;color:var(--mute)}
+.rule-item b{font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:500;color:var(--ink)}
+.tbl{width:100%;border-collapse:collapse;margin-top:8px}
+.tbl td{padding:9px 0;border-bottom:1px solid var(--rule);font-size:14.5px;vertical-align:top}
+.tbl td:first-child{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--sea);width:74px;white-space:nowrap;padding-right:12px}
+.tbl tr:last-child td{border-bottom:0}
+
+/* ============================================================
+   SUIVI  — tout est préfixé .sv- pour ne rien toucher au reste
+   ============================================================ */
+.sv-block{margin-bottom:30px}
+.sv-head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;
+  border-bottom:1px solid var(--rule);padding-bottom:9px;margin-bottom:14px}
+.sv-head h3{font-size:18px;font-weight:700;line-height:1.15}
+.sv-head .eyebrow{display:block;margin-bottom:4px}
+.sv-head .rt{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mute);
+  letter-spacing:.06em;text-align:right;flex:none;white-space:nowrap}
+
+.sv-card{background:var(--paper);border:1px solid var(--rule);border-radius:4px;
+  padding:14px 15px;box-shadow:var(--shadow);margin-bottom:12px}
+
+/* --- bandeau de chiffres --- */
+.sv-nums{display:flex;border:1.5px solid var(--ink);border-radius:4px;overflow:hidden;
+  background:var(--paper);margin-bottom:14px}
+.sv-num{flex:1;padding:12px 11px;border-right:1px solid var(--rule);min-width:0}
+.sv-num:last-child{border-right:0}
+.sv-num .eyebrow{display:block;font-size:9px;letter-spacing:.09em;line-height:1.3}
+.sv-num b{display:block;font-family:'Space Grotesk',sans-serif;font-size:23px;
+  font-weight:700;line-height:1;margin-top:6px;white-space:nowrap}
+.sv-num small{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;
+  color:var(--mute);margin-top:4px;letter-spacing:.03em}
+.sv-num.alt{background:var(--sea-soft)}
+.sv-num.alt b{color:var(--sea)}
+.sv-num.hot b{color:var(--signal)}
+
+/* --- graphiques --- */
+.sv-chart{width:100%;max-width:440px;margin:0 auto;display:block;background:var(--paper);
+  border:1px solid var(--rule);border-radius:4px;box-shadow:var(--shadow)}
+.sv-legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:9px;
+  font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--mute);letter-spacing:.04em}
+.sv-legend i{display:inline-block;width:16px;height:2.5px;vertical-align:middle;
+  margin-right:5px;border-radius:2px}
+.sv-legend .band{height:9px;border-radius:2px;background:var(--sea-soft)}
+
+/* --- formulaires --- */
+.sv-form{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
+.sv-f{flex:1;min-width:96px}
+.sv-f label{display:block;font-family:'IBM Plex Mono',monospace;font-size:9.5px;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--mute);margin-bottom:5px}
+.sv-in{width:100%;background:var(--paper);border:1px solid var(--rule);border-radius:3px;
+  padding:9px 10px;font-family:'IBM Plex Mono',monospace;font-size:14.5px;color:var(--ink);
+  font-variant-numeric:tabular-nums;-webkit-appearance:none;appearance:none;min-height:40px}
+.sv-in:focus{outline:2px solid var(--sea);outline-offset:-1px;border-color:var(--sea)}
+.sv-in::placeholder{color:var(--rule)}
+.sv-btn{background:var(--ink);border:1.5px solid var(--ink);border-radius:3px;
+  padding:10px 16px;cursor:pointer;color:var(--paper);min-height:40px;
+  font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+.sv-btn:hover{background:var(--sea);border-color:var(--sea)}
+.sv-btn:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+.sv-btn.ghost{background:none;color:var(--ink)}
+.sv-btn.ghost:hover{background:var(--sea-soft);color:var(--sea)}
+
+/* --- chips de période --- */
+.sv-chips{display:flex;gap:6px;margin-bottom:12px}
+.sv-chip{background:none;border:1px solid var(--rule);border-radius:20px;padding:6px 13px;
+  cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:10.5px;
+  letter-spacing:.06em;color:var(--mute)}
+.sv-chip.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.sv-chip:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+
+/* --- liste des pesées --- */
+.sv-rows{margin-top:14px;border-top:1px solid var(--rule)}
+.sv-row{display:flex;align-items:center;gap:12px;padding:9px 2px;
+  border-bottom:1px solid rgba(195,204,196,.5);font-size:14.5px}
+.sv-row .d{font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--mute);
+  width:96px;flex:none}
+.sv-row .v{flex:1;font-family:'IBM Plex Mono',monospace;font-size:14.5px;font-weight:500;
+  font-variant-numeric:tabular-nums}
+.sv-row .delta{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--mute);flex:none}
+.sv-del{background:none;border:0;cursor:pointer;color:var(--mute);font-size:17px;
+  line-height:1;padding:2px 6px;flex:none;font-family:'Karla',sans-serif}
+.sv-del:hover{color:var(--signal)}
+.sv-empty{font-size:14px;color:var(--mute);padding:14px 0;font-style:italic}
+
+/* --- semaine de séances --- */
+.sv-wknav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.sv-wknav b{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.05em;font-weight:500}
+.sv-arrow{background:var(--paper);border:1px solid var(--rule);border-radius:3px;
+  width:34px;height:34px;cursor:pointer;font-family:'IBM Plex Mono',monospace;
+  font-size:14px;color:var(--ink);flex:none;line-height:1}
+.sv-arrow:hover{border-color:var(--sea);color:var(--sea)}
+.sv-arrow[disabled]{opacity:.3;cursor:default}
+.sv-days{display:flex;gap:5px}
+.sv-day{flex:1;background:var(--paper);border:1px solid var(--rule);border-radius:3px;
+  padding:9px 2px 8px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:10px;
+  letter-spacing:.05em;color:var(--mute);display:flex;flex-direction:column;
+  align-items:center;gap:6px;min-height:56px;justify-content:center}
+.sv-day .mk{width:15px;height:15px;border:1.5px solid var(--rule);border-radius:3px;
+  display:grid;place-items:center}
+.sv-day .mk svg{width:10px;height:10px;stroke:var(--paper);stroke-width:3;fill:none;opacity:0}
+.sv-day.done{border-color:var(--sea)}
+.sv-day.done .mk{background:var(--sea);border-color:var(--sea)}
+.sv-day.done .mk svg{opacity:1}
+.sv-day.done{color:var(--sea)}
+.sv-day.rest{opacity:.4;cursor:default}
+.sv-day.hard .mk{border-color:var(--signal)}
+.sv-day.hard.done .mk{background:var(--signal);border-color:var(--signal)}
+.sv-day.future{opacity:.45}
+.sv-day:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+
+/* --- ressenti J+1 --- */
+.sv-feel{display:flex;align-items:center;gap:10px;padding:10px 2px;
+  border-bottom:1px solid rgba(195,204,196,.5)}
+.sv-feel .d{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--mute);
+  width:112px;flex:none;line-height:1.3}
+.sv-feel .d em{display:block;font-style:normal;font-size:9.5px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--rule)}
+.sv-lvls{display:flex;gap:5px;flex:1;justify-content:flex-end}
+.sv-lvl{background:var(--paper);border:1px solid var(--rule);border-radius:3px;
+  padding:7px 0;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:10px;
+  letter-spacing:.05em;color:var(--mute);width:74px;text-align:center;
+  display:flex;flex-direction:column;align-items:center;gap:5px;min-height:44px;justify-content:center}
+.sv-lvl .x{font-size:13px;line-height:1;opacity:0;font-weight:600}
+.sv-lvl.on{border-color:var(--ink);color:var(--ink);font-weight:500}
+.sv-lvl.on .x{opacity:1}
+.sv-lvl.on[data-l="1"]{background:var(--sea-soft);border-color:var(--sea);color:var(--sea)}
+.sv-lvl.on[data-l="2"]{background:var(--fog);border-color:var(--mute)}
+.sv-lvl.on[data-l="3"]{background:rgba(221,63,20,.1);border-color:var(--signal);color:var(--signal)}
+.sv-lvl:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+
+/* --- tests --- */
+.sv-test{background:var(--paper);border:1px solid var(--rule);border-radius:4px;
+  margin-bottom:12px;box-shadow:var(--shadow);overflow:hidden}
+.sv-test.now{border-color:var(--ink);border-width:1.5px}
+.sv-test.past{opacity:.72}
+.sv-ttop{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;
+  padding:13px 15px;border-bottom:1px solid var(--rule)}
+.sv-ttop h4{font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;margin:0}
+.sv-ttop .when{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--mute);display:block;margin-bottom:4px}
+.sv-goal{text-align:right;flex:none;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--mute)}
+.sv-goal b{display:block;font-family:'Space Grotesk',sans-serif;font-size:21px;
+  font-weight:700;line-height:1;color:var(--ink)}
+.sv-goal b.ok{color:var(--sea)}
+.sv-goal b.ko{color:var(--signal)}
+.sv-tbody{padding:13px 15px 15px}
+.sv-verdict{margin-top:11px;font-family:'IBM Plex Mono',monospace;font-size:11px;
+  letter-spacing:.04em;padding:8px 11px;border-radius:3px;background:var(--sea-soft);color:var(--sea)}
+.sv-verdict.ko{background:rgba(221,63,20,.08);color:var(--signal)}
+.sv-verdict.wait{background:none;border:1px solid var(--rule);color:var(--mute)}
+
+/* --- prises de sang --- */
+.sv-flag{font-family:'IBM Plex Mono',monospace;font-size:10.5px;margin-top:9px;
+  padding:8px 11px;border-left:2.5px solid var(--signal);background:rgba(221,63,20,.06);
+  color:var(--ink);line-height:1.5}
+.sv-flag.ok{border-left-color:var(--sea);background:var(--sea-soft)}
+
+.sv-note{font-size:13.5px;color:var(--mute);line-height:1.5;margin-top:10px}
+.sv-tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+
+@media (max-width:520px){
+  .sv-num b{font-size:20px}
+  .sv-num{padding:10px 8px}
+  .sv-row .d{width:78px;font-size:11.5px}
+  .sv-feel .d{width:92px;font-size:11px}
+  .sv-lvl{width:auto;flex:1;font-size:9.5px}
+  .sv-lvls{gap:4px}
+  .sv-form{gap:7px}
+  .sv-f{min-width:78px}
+  .sv-f:has(input[type=date]){flex:1 0 100%}
+  .sv-in[type=date]{font-size:13.5px}
+}
+
+@media (max-width:520px){
+  .dayhead h2{font-size:25px}
+  .timeline{padding-left:56px}
+  .timeline::before,.tide{left:41px}
+  .slot .clock{left:-56px;width:37px;font-size:11.5px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="masthead">
+    <h1>Semaine type</h1>
+    <div class="sub">
+      <span>68 kg → 71–72 kg · 6 séances</span>
+      <span class="countdown" id="cd">—</span>
+    </div>
+  </header>
+</div>
+
+<!-- ============ JOUR ============ -->
+<section class="panel on" id="p-jour">
+  <div class="wrap">
+    <div class="dayrow" id="dayrow"></div>
+    <div id="dayview"></div>
+  </div>
+</section>
+
+<!-- ============ RECETTES ============ -->
+<section class="panel" id="p-recettes">
+  <div class="wrap">
+    <div class="shead">
+      <h2>Recettes</h2>
+      <p>Les illustrations sont dessinées, pas photographiées — je n'ai pas de banque d'images à te proposer.</p>
+    </div>
+    <div class="filters" id="filters"></div>
+    <div class="grid" id="rgrid"></div>
+  </div>
+</section>
+
+<!-- ============ COURSES ============ -->
+<section class="panel" id="p-courses">
+  <div class="wrap">
+    <div class="shead">
+      <h2>Courses</h2>
+      <p>Une liste par semaine. Vérifie « lécithine de soja » sur tout ce qui est transformé.</p>
+    </div>
+    <div class="budget" id="budget"></div>
+    <div class="progressbar"><i id="pbar"></i></div>
+    <div class="progresstxt" id="ptxt">0 / 0</div>
+    <button class="copybtn" id="copybtn">Copier la liste du drive</button>
+    <div id="shoplist"></div>
+  </div>
+</section>
+
+<!-- ============ CUISINE ============ -->
+<section class="panel" id="p-cuisine">
+  <div class="wrap">
+    <div class="shead">
+      <h2>Cuisine</h2>
+      <p>Deux sessions par semaine. Sans congélateur, rien ne tient plus de 3–4 jours.</p>
+    </div>
+    <div id="sessions"></div>
+  </div>
+</section>
+
+<!-- ============ RÈGLES ============ -->
+<section class="panel" id="p-regles">
+  <div class="wrap">
+    <div class="shead"><h2>Règles</h2><p>Ce qui ne change jamais, quelle que soit la semaine.</p></div>
+    <div id="rules"></div>
+    <div class="shead" style="margin-top:14px"><h2>Semaine chargée</h2><p>L'eau ne saute jamais en dernier.</p></div>
+    <table class="tbl" id="fallback"></table>
+    <div class="warn" style="margin-top:20px">
+      <b>Les repas ne se réduisent pas quand les séances se réduisent.</b> C'est le moment où tu es le plus fatigué — et le mécanisme exact qui produit un déficit en janvier.
+    </div>
+  </div>
+</section>
+
+<!-- ============ SUIVI ============ -->
+<section class="panel" id="p-suivi">
+  <div class="wrap">
+    <div class="shead">
+      <h2>Suivi</h2>
+      <p>Ce qui se mesure sur huit mois. Les chiffres isolés ne disent rien — c'est la pente qui compte.</p>
+    </div>
+    <div id="sv-poids" class="sv-block"></div>
+    <div id="sv-seances" class="sv-block"></div>
+    <div id="sv-ressenti" class="sv-block"></div>
+    <div id="sv-tests" class="sv-block"></div>
+    <div id="sv-sang" class="sv-block"></div>
+    <div id="sv-data" class="sv-block"></div>
+  </div>
+</section>
+
+<div class="scrim" id="scrim"><div class="sheet" id="sheet"></div></div>
+
+<nav class="nav" id="nav"></nav>
+
+<script>
+/* ============================================================
+   STOCKAGE — passerelle vers localStorage
+   ------------------------------------------------------------
+   L'app appelait window.storage, qui n'existe que dans
+   l'environnement où elle a été écrite. Hébergée sur le web,
+   cet objet est absent : rien n'était sauvegardé, ni les
+   courses, ni les étapes de cuisine.
+   Ce bloc le recrée par-dessus localStorage, avec exactement
+   la même signature. Aucune ligne de load() ou save() n'a
+   été modifiée.
+   ============================================================ */
+if(!window.storage){
+  window.storage={
+    async get(k){try{const v=localStorage.getItem(k);return v===null?null:{key:k,value:v};}catch(e){return null}},
+    async set(k,v){try{localStorage.setItem(k,v);return{key:k,value:v}}catch(e){return null}},
+    async delete(k){try{localStorage.removeItem(k);return{key:k,deleted:true}}catch(e){return null}},
+    async list(p){try{return{keys:Object.keys(localStorage).filter(x=>!p||x.startsWith(p))}}catch(e){return{keys:[]}}}
+  };
+}
+
+/* ============================================================
+   ILLUSTRATIONS — flat SVG, une par famille de plat
+   ============================================================ */
+const S={sea:'#0F4C41',soft:'#D7E3DE',ink:'#101F1C',sig:'#DD3F14',paper:'#F7F9F4'};
+function frame(inner){return `<svg viewBox="0 0 200 120" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><rect width="200" height="120" fill="${S.soft}"/>${inner}</svg>`}
+const ART={
+  bowl:frame(`<circle cx="100" cy="56" r="34" fill="${S.paper}" stroke="${S.ink}" stroke-width="2"/><path d="M66 56a34 34 0 0 0 68 0" fill="${S.sea}"/><circle cx="86" cy="44" r="7" fill="${S.sig}"/><circle cx="112" cy="41" r="5" fill="${S.sea}"/><path d="M52 96h96" stroke="${S.ink}" stroke-width="2" stroke-linecap="round"/><path d="M60 104h80" stroke="${S.ink}" stroke-width="1" opacity=".35"/>`),
+  fish:frame(`<path d="M48 60c22-26 62-26 84 0-22 26-62 26-84 0z" fill="${S.sea}"/><path d="M132 60l24-16v32z" fill="${S.ink}"/><circle cx="70" cy="55" r="3.5" fill="${S.paper}"/><path d="M58 60h64" stroke="${S.paper}" stroke-width="1.4" opacity=".55"/><path d="M40 92h120" stroke="${S.ink}" stroke-width="2" stroke-linecap="round"/><path d="M156 30l8 8-8 8" stroke="${S.sig}" stroke-width="2" fill="none"/>`),
+  egg:frame(`<ellipse cx="82" cy="60" rx="34" ry="27" fill="${S.paper}" stroke="${S.ink}" stroke-width="2"/><circle cx="82" cy="60" r="13" fill="${S.sig}"/><ellipse cx="134" cy="72" rx="22" ry="17" fill="${S.paper}" stroke="${S.ink}" stroke-width="2"/><circle cx="134" cy="72" r="8" fill="${S.sig}" opacity=".8"/><path d="M30 96h140" stroke="${S.ink}" stroke-width="2" stroke-linecap="round"/>`),
+  pan:frame(`<rect x="52" y="40" width="76" height="44" rx="6" fill="${S.ink}"/><rect x="60" y="48" width="60" height="28" rx="3" fill="${S.sea}"/><circle cx="78" cy="62" r="5" fill="${S.sig}"/><circle cx="98" cy="58" r="4" fill="${S.paper}" opacity=".8"/><circle cx="106" cy="68" r="3.5" fill="${S.sig}" opacity=".7"/><path d="M128 58h34" stroke="${S.ink}" stroke-width="7" stroke-linecap="round"/><path d="M46 96h108" stroke="${S.ink}" stroke-width="2" stroke-linecap="round"/>`),
+  pot:frame(`<path d="M58 46h84v34a10 10 0 0 1-10 10H68a10 10 0 0 1-10-10z" fill="${S.ink}"/><rect x="52" y="38" width="96" height="9" rx="4" fill="${S.sea}"/><path d="M78 28c0-6 6-6 6-12M100 26c0-6 6-6 6-12M122 28c0-6 6-6 6-12" stroke="${S.sig}" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M40 100h120" stroke="${S.ink}" stroke-width="2" stroke-linecap="round"/>`),
+  oats:frame(`<path d="M62 48h76l-8 40a8 8 0 0 1-8 6H78a8 8 0 0 1-8-6z" fill="${S.paper}" stroke="${S.ink}" stroke-width="2"/><path d="M68 62h64l-5 26a6 6 0 0 1-6 5H79a6 6 0 0 1-6-5z" fill="${S.sea}"/><circle cx="90" cy="74" r="4.5" fill="${S.sig}"/><circle cx="110" cy="80" r="3.5" fill="${S.paper}"/><path d="M84 40c4-8 12-8 16 0M108 42c3-6 9-6 12 0" stroke="${S.sig}" stroke-width="2" fill="none" stroke-linecap="round"/>`),
+  pasta:frame(`<circle cx="100" cy="62" r="36" fill="${S.paper}" stroke="${S.ink}" stroke-width="2"/><path d="M72 56c10 8 18-6 28 2s18-6 28 2" stroke="${S.sea}" stroke-width="3.5" fill="none" stroke-linecap="round"/><path d="M72 68c10 8 18-6 28 2s18-6 28 2" stroke="${S.sea}" stroke-width="3.5" fill="none" stroke-linecap="round"/><circle cx="88" cy="48" r="5" fill="${S.sig}"/><circle cx="116" cy="80" r="4" fill="${S.sig}"/>`),
+  thermos:frame(`<rect x="82" y="30" width="36" height="66" rx="6" fill="${S.ink}"/><rect x="78" y="22" width="44" height="12" rx="4" fill="${S.sea}"/><rect x="88" y="52" width="24" height="12" rx="2" fill="${S.sig}"/><path d="M138 44c6 8 6 16 0 24M152 40c9 12 9 24 0 36" stroke="${S.sea}" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M44 100h112" stroke="${S.ink}" stroke-width="2" stroke-linecap="round"/>`),
+  bag:frame(`<path d="M70 46h60v52a6 6 0 0 1-6 6H76a6 6 0 0 1-6-6z" fill="${S.paper}" stroke="${S.ink}" stroke-width="2"/><path d="M86 46V34a14 14 0 0 1 28 0v12" stroke="${S.ink}" stroke-width="2" fill="none"/><circle cx="88" cy="70" r="5" fill="${S.sea}"/><circle cx="108" cy="78" r="6" fill="${S.sig}"/><circle cx="112" cy="62" r="4" fill="${S.sea}"/>`),
+  tortilla:frame(`<circle cx="100" cy="60" r="38" fill="${S.sig}" opacity=".85"/><circle cx="100" cy="60" r="38" fill="none" stroke="${S.ink}" stroke-width="2"/><path d="M100 22v76M62 60h76" stroke="${S.paper}" stroke-width="1.6" opacity=".7"/><circle cx="82" cy="46" r="4" fill="${S.paper}" opacity=".8"/><circle cx="118" cy="74" r="3.5" fill="${S.paper}" opacity=".8"/>`),
+  glass:frame(`<path d="M78 34h44l-6 60a8 8 0 0 1-8 7h-16a8 8 0 0 1-8-7z" fill="${S.paper}" stroke="${S.ink}" stroke-width="2"/><path d="M82 58h36l-4 36a6 6 0 0 1-6 5h-16a6 6 0 0 1-6-5z" fill="${S.sea}"/><path d="M132 40l14-8M136 56h16" stroke="${S.sig}" stroke-width="2" stroke-linecap="round"/>`)
+};
+
+/* ============================================================
+   RECETTES
+   ============================================================ */
+const R={
+ porridge:{n:"Porridge complet",art:"oats",t:10,kcal:980,p:52,tag:"petit-déj",star:1,
+  ing:[["Flocons d'avoine","100 g"],["Eau","250 ml"],["Skyr","200 g"],["Œufs","3"],["Banane","1"],["Amandes","30 g"],["Miel, cannelle, sel",""]],
+  st:["Flocons + eau + pincée de sel dans une casserole.","Feu moyen, remuer, 5 minutes jusqu'à épaississement.","Hors du feu, laisser tiédir 2 minutes, puis incorporer le skyr.","Miel, cannelle.","À côté : 3 œufs (brouillés, durs ou au plat) + banane + amandes."],
+  err:"Si tu ajoutes le skyr bouillant, il graine. C'est la seule erreur possible sur cette recette.",
+  tip:"Œufs brouillés : feu doux, retire du feu quand c'est encore un peu liquide. La chaleur résiduelle finit la cuisson."},
+
+ oats:{n:"Overnight oats",art:"glass",t:3,kcal:850,p:34,tag:"petit-déj",
+  ing:[["Flocons d'avoine","80 g"],["Skyr","200 g"],["Eau","150 ml"],["Miel","1 c. à s."],["Fruits secs","30 g"],["Amandes","20 g"],["Banane + beurre de cacahuète","le matin"]],
+  st:["La veille : tout mélanger dans un bocal sauf la banane.","Fermer, frigo.","Le matin : ajouter la banane coupée et 1 c. à s. de beurre de cacahuète.","À côté : 2 œufs durs du batch."],
+  tip:"Prépares-en trois d'un coup le dimanche soir, pour lundi, mardi, mercredi."},
+
+ smoothie:{n:"Smoothie de secours",art:"glass",t:3,kcal:800,p:30,tag:"petit-déj",
+  ing:[["Skyr","200 g"],["Banane","1"],["Flocons d'avoine","60 g"],["Beurre de cacahuète","2 c. à s."],["Miel","1 c. à s."],["Eau","200 ml"],["Amandes","30 g"]],
+  st:["Tout mixer.","Boire."],
+  tip:"C'est fait pour les matins où l'appétit ne suit pas. Ces matins arriveront — ce n'est pas de la triche."},
+
+ bowl:{n:"Bowl riz, poulet, légumes rôtis",art:"bowl",t:5,kcal:1100,p:52,tag:"déjeuner",star:1,
+  from:"Assemblage. Le riz, le poulet et les légumes viennent de la session du samedi.",
+  ing:[["Riz cuit","300 g","feculents"],["Poulet du batch","160 g","pouletbatch"],["Légumes rôtis","1 portion","legumes"],["Huile d'olive","2 c. à s."],["Comté en dés","40 g"],["Citron, paprika fumé",""]],
+  st:["Tout vient du batch du samedi.","Assembler dans une boîte.","Ajouter l'huile et le citron au dernier moment."],
+  tip:"Se mange froid ou réchauffé. Retire le fromage les jours renfo (mardi, jeudi)."},
+
+ tortillaplate:{n:"Tortilla, salade, pain",art:"tortilla",t:3,kcal:1000,p:34,tag:"déjeuner",
+  from:"Assemblage. La tortilla se cuisine le samedi — ouvre sa fiche ci-dessous pour la recette complète.",
+  ing:[["Tortilla espagnole","1/4","tortilla"],["Salade","1 grosse portion"],["Huile d'olive","2 c. à s."],["Pain complet","3 tranches"],["Fromage","40 g"]],
+  st:["Zéro cuisson. Sortir la tortilla du frigo, couper une part.","Assaisonner la salade à l'huile d'olive.","Assembler."],
+  tip:"Le déjeuner des journées où tu manges sur le pouce, sans micro-ondes."},
+
+ poelee:{n:"Poêlée patate douce, pois chiches, œufs",art:"pan",t:25,kcal:1000,p:40,tag:"déjeuner",
+  ing:[["Patate douce en cubes","400 g"],["Pois chiches","1 boîte"],["Œufs","2"],["Cumin, paprika","1 c. à c. chacun"],["Comté râpé, persil",""]],
+  st:["Patate douce à la poêle, huile d'olive, feu moyen, 15 min à couvert.","Ajouter les pois chiches égouttés + épices, 5 min.","Creuser 2 puits, casser les œufs, couvrir 4 min.","Comté, persil."]},
+
+ rizfrit:{n:"Riz frit aux œufs",art:"pan",t:15,kcal:900,p:38,tag:"déjeuner",star:1,
+  from:"Le riz et le poulet viennent de la session du samedi. Le riz doit avoir passé une nuit au frigo.",
+  ing:[["Riz cuit FROID","300 g","feculents"],["Œufs","3"],["Poulet du batch","120 g","pouletbatch"],["Oignon","1"],["Carotte","1"],["Paprika fumé, vinaigre",""]],
+  st:["Poêle très chaude, 2 c. à s. d'huile.","Oignon et carotte en petits dés, 4 min.","Riz froid, écraser les paquets à la spatule, faire sauter 3 min.","Poulet en morceaux, 2 min.","Pousser tout d'un côté. Casser les œufs dans l'espace libre, brouiller, puis mélanger.","Sel, poivre, paprika, un trait de vinaigre. Persil hors du feu."],
+  err:"Le riz doit être froid, de la veille. Avec du riz chaud, tu obtiens une bouillie.",
+  tip:"Pas de sauce soja. Paprika fumé + 1 c. à c. de concentré de tomate donnent la profondeur qui manque."},
+
+ sardines:{n:"Pâtes aux sardines",art:"fish",t:10,kcal:900,p:45,tag:"dîner",star:1,
+  ing:[["Pâtes","120 g crus"],["Sardines à l'huile","2 boîtes"],["Ail","2 gousses"],["Piment","1 c. à c."],["Concentré de tomate","1 c. à s."],["Citron, persil, chapelure",""]],
+  st:["Mettre les pâtes à cuire.","Huile d'olive, ail émincé, piment — feu doux 2 min. L'ail ne doit pas brunir.","Sardines égouttées, écrasées grossièrement à la fourchette.","Concentré de tomate + une louche d'eau de cuisson.","Mélanger aux pâtes égouttées.","Zeste et jus de citron, persil."],
+  tip:"Garde les arêtes : c'est là qu'est le calcium. Et 3 c. à s. de chapelure dorée à sec, saupoudrées à la fin — le geste sicilien, ça remplace le parmesan.",
+  err:"À faire 3 fois par semaine avec le maquereau. C'est le meilleur rapport qualité/prix/effet de tout le programme."},
+
+ poulet:{n:"Poulet paprika, riz, chou",art:"pan",t:15,kcal:900,p:45,tag:"dîner",
+  from:"Le poulet et le riz viennent de la session du samedi. Seul le chou se cuisine sur le moment.",
+  ing:[["Poulet du batch","150 g","pouletbatch"],["Chou","1/4"],["Riz cuit","1 portion","feculents"],["Paprika fumé, ail en poudre",""],["Vinaigre",""]],
+  st:["Poulet réchauffé à la poêle avec paprika, ail, huile d'olive.","Chou émincé finement, poêle bien chaude, 8 min en remuant.","Sel, poivre, un trait de vinaigre à la fin.","Servir avec le riz."],
+  tip:"Jour renfo : 80 g de féculent cru, et mets les protéines en premier dans l'assiette."},
+
+ chili:{n:"Chili aux haricots rouges",art:"pot",t:25,kcal:900,p:45,tag:"batch",star:1,
+  usedIn:"Dîner du mercredi · Déjeuner du jeudi · Déjeuner du vendredi",
+  usedIn:"Dîner du mercredi · Déjeuner du jeudi · Déjeuner du vendredi",
+  ing:[["Steak haché 5 %","400 g"],["Haricots rouges","2 boîtes"],["Tomates concassées","1 boîte"],["Oignon","1"],["Ail","2 gousses"],["Cumin, paprika","2 c. à c. chacun"],["Origan, piment","1 c. à c."],["Eau","200 ml"]],
+  st:["Huile, oignon et ail hachés, 5 min.","Steak haché, colorer en écrasant à la spatule.","Épices, 30 secondes.","Tomates + haricots égouttés + eau.","Mijoter 25 min à découvert. Saler en fin de cuisson.","Servir sur riz, fromage râpé."],
+  tip:"3 portions : mercredi soir, jeudi midi, vendredi midi. Meilleur le lendemain.",
+  err:"Au frigo dans l'heure. Sans congélateur, tu n'as aucune marge d'erreur."},
+
+ dahl:{n:"Dahl de lentilles corail",art:"pot",t:20,kcal:850,p:35,tag:"batch",
+  usedIn:"Alternative au chili, une semaine sur deux — mêmes trois repas",
+  usedIn:"Alternative au chili, une semaine sur deux · Mercredi, jeudi, vendredi",
+  ing:[["Lentilles corail","250 g"],["Tomates concassées","1 boîte"],["Eau","700 ml"],["Oignon","1"],["Ail","3 gousses"],["Gingembre râpé","1 c. à s."],["Curry, cumin, curcuma",""],["Beurre de cacahuète","1 c. à s."]],
+  st:["Huile, oignon, ail, gingembre — 5 min.","Épices, 30 secondes.","Lentilles rincées + tomates + eau.","Mijoter 20 min à couvert.","Sel, jus de citron.","Beurre de cacahuète en fin de cuisson."],
+  tip:"Le beurre de cacahuète remplace le lait de coco pour trois fois moins cher. ~1,20 € la portion. Alterne avec le chili une semaine sur deux.",},
+
+ omelette:{n:"Omelette roulée, pommes de terre sautées",art:"egg",t:15,kcal:900,p:38,tag:"dîner",
+  ing:[["Œufs","4"],["Eau","1 c. à s."],["Comté ou épinards en boîte",""],["Pommes de terre","400 g"],["Ail, persil",""]],
+  st:["Battre les œufs avec l'eau (pas de lait), sel, poivre.","Poêle feu moyen-vif, bien huilée. Verser, laisser prendre 30 secondes.","Ramener les bords vers le centre en inclinant la poêle pour que le cru coule dessous.","Garniture sur une moitié quand le dessus est presque pris. Rouler.","Pommes de terre : cubes de 1,5 cm, huile généreuse, feu moyen-vif."],
+  tip:"Ne touche pas les pommes de terre pendant 5 minutes — c'est ce qui fait la croûte. Puis remuer toutes les 3 min, 15 min au total."},
+
+ vendredi:{n:"Riz blanc, poulet, carottes",art:"bowl",t:15,kcal:850,p:42,tag:"dîner",
+  ing:[["Riz blanc","120 g crus"],["Poulet","150 g"],["Carottes","300 g"],["Beurre","1 noisette"]],
+  st:["Riz blanc, pas complet ce soir-là.","Poulet à la poêle, assaisonné simplement.","Carottes en rondelles, à couvert 12 min, avec une noisette de beurre."],
+  err:"Peu de fibres, peu de gras : tu nages dans 1h45. Pas de légumineuses, pas de chou, pas de sauce."},
+
+ recup:{n:"Tupperware de récup",art:"glass",t:2,kcal:550,p:25,tag:"dîner",star:1,
+  ing:[["Fromage blanc","200 g"],["Flocons d'avoine","60 g"],["Banane écrasée","1"],["Miel","1 c. à s."],["Cannelle",""]],
+  st:["Vendredi 8h00 : tout mélanger dans un tupperware.","Fermer, frigo.","22h20 : manger dans la voiture ou en rentrant."],
+  tip:"Ça épaissit dans la journée — c'est voulu. À 22h20 après deux heures de bassin, tu ne prépareras rien."},
+
+ maquereau:{n:"Maquereau au four, patates douces, épinards",art:"fish",t:30,kcal:950,p:45,tag:"dîner",
+  ing:[["Maquereaux frais","2"],["Patates douces","400 g"],["Épinards en boîte","1"],["Ail, thym, citron",""]],
+  st:["Patates douces en cubes, huile, sel — four 200 °C, 25 min.","À 10 min de la fin : poser les maquereaux sur la plaque, huile, citron, sel, thym.","Épinards égouttés et rincés, poêlés 4 min avec ail et huile."],
+  tip:"Sans poisson frais : 2 boîtes de maquereau au naturel, réchauffées 3 min à la poêle avec du citron. Même profil, zéro contrainte d'achat."},
+
+ shakshuka:{n:"Shakshuka",art:"pan",t:20,kcal:700,p:32,tag:"dîner",
+  ing:[["Œufs","4"],["Tomates concassées","1 boîte"],["Poivron","1"],["Oignon","1"],["Ail","2 gousses"],["Cumin, paprika fumé","1 c. à c."],["Pain",""]],
+  st:["Huile d'olive, oignon et poivron, 8 min.","Ail et épices, 30 secondes.","Tomates + 1 c. à s. de concentré. Saler.","Mijoter 10 min à découvert.","Creuser 4 puits, casser un œuf dans chacun.","Couvrir, feu doux, 5-7 min. Blancs pris, jaunes coulants."],
+  tip:"Boost protéines : une boîte de pois chiches à l'étape 3. Remplacement possible du dimanche soir si tu veux varier."},
+
+ pouletbatch:{n:"Poulet du batch",art:"pan",t:25,kcal:165,p:31,tag:"batch",
+  usedIn:"Bowl du lundi et du mercredi · Poulet paprika du mardi · Riz frit du dimanche",
+  ing:[["Filets ou cuisses de poulet","600 g"],["Huile d'olive","2 c. à s."],["Paprika fumé","2 c. à c."],["Ail en poudre","1 c. à c."],["Herbes de Provence, sel",""]],
+  st:["Frotter le poulet d'huile, paprika, ail, herbes et sel.","Four 200 °C pendant 25 min (cuisses), ou poêle 6 min par face (filets).","Laisser tiédir, puis au frigo dans l'heure.","Se garde 3 jours."],
+  tip:"Assaisonne franchement : il sera mangé froid ou réchauffé pendant trois jours. Les valeurs affichées sont pour 100 g.",
+  err:"600 g cuits = environ 4 portions. Ne dépasse pas 3 jours de conservation sans congélateur."},
+
+ feculents:{n:"Riz et pâtes du batch",art:"pot",t:15,kcal:130,p:2.7,tag:"batch",
+  usedIn:"Bowl du lundi et du mercredi · Poulet paprika du mardi · Riz frit du dimanche · Accompagnement du chili",
+  ing:[["Riz — session du samedi","300 g crus"],["Pâtes ou riz — session du mercredi","300 g crus"],["Sel",""]],
+  st:["Cuire normalement, sans matière grasse.","Égoutter et étaler sur un plat ou une plaque pour refroidir vite.","Au frigo dans l'heure, en boîte hermétique.","Se garde 3 jours."],
+  err:"Le riz cuit laissé refroidir toute la nuit à température ambiante est le seul vrai risque alimentaire du programme. Au frigo dans l'heure, systématiquement.",
+  tip:"Garde toujours une portion de riz au frigo la veille du dimanche : le riz frit exige du riz froid. Valeurs affichées pour 100 g cuits."},
+
+ legumes:{n:"Légumes rôtis",art:"bowl",t:35,kcal:120,p:3,tag:"batch",
+  usedIn:"Bowl du lundi et du mercredi · Accompagnement libre",
+  ing:[["Carottes","3"],["Oignons","2"],["Patate douce","1"],["Courge","1/2"],["Poivrons (si saison)","2"],["Huile d'olive","4 c. à s."],["Herbes de Provence, sel",""]],
+  st:["Couper tous les légumes en cubes réguliers de 2 cm.","Étaler sur une plaque, huile d'olive généreuse, sel, herbes.","Four 200 °C, 35 minutes. Remuer à mi-cuisson.","Laisser tiédir, puis au frigo. Se garde 3 jours."],
+  err:"Ne surcharge pas la plaque. Entassés, les légumes cuisent à la vapeur au lieu de rôtir — utilise deux plaques s'il le faut."},
+
+ oeufsdurs:{n:"Œufs durs × 12",art:"egg",t:15,kcal:78,p:6.5,tag:"batch",
+  usedIn:"Petit-déjeuner du dimanche · En-cas · Sandwich œuf-écrasé · Dépannage",
+  usedIn:"En-cas de 10h30 · Petit-déjeuner du dimanche · Dépannage permanent",
+  ing:[["Œufs","12"],["Vinaigre","1 c. à s."]],
+  st:["Œufs dans une casserole, couverts d'eau froide + vinaigre.","Porter à ébullition.","Dès l'ébullition : 9 minutes exactement.","Bac d'eau froide immédiatement, 3 minutes.","Garder en coquille au frigo, 5 jours."],
+  tip:"Le bac d'eau froide est ce qui rend l'écalage facile. Et des œufs de plus d'une semaine s'écalent bien mieux que des œufs très frais."},
+
+ tortilla:{n:"Tortilla espagnole",art:"tortilla",t:35,kcal:400,p:14,tag:"batch",star:1,
+  usedIn:"Déjeuner du mardi · Goûter transportable · Dépannage du soir",
+  usedIn:"Déjeuner du mardi · Dépannage du soir · Goûter transportable",
+  intro:"Rien à voir avec la tortilla mexicaine. C'est une omelette épaisse aux pommes de terre, cuite à la poêle et coupée en parts. Quatre ingrédients, pas de lait, pas de farine : les œufs suffisent à tenir l'ensemble. Les valeurs affichées sont pour une part sur quatre.",
+  ing:[["Œufs","8"],["Pommes de terre","600 g"],["Oignon","1 gros"],["Huile d'olive","8 c. à s."],["Sel",""]],
+  st:["Pommes de terre en tranches fines de 3 mm, oignon en lamelles.","Grande poêle, huile généreuse, feu moyen-doux. Saler.","20 minutes en remuant régulièrement. Le but est de confire, pas de frire.","Égoutter dans une passoire au-dessus d'un bol — garde l'huile.","Battre les œufs, saler. Verser les pommes de terre chaudes dedans. Laisser reposer 10 minutes.","1 c. à s. d'huile récupérée dans la poêle. Verser le mélange. 5-6 min en décollant les bords.","Le retournement : assiette sur la poêle, retourner d'un geste franc, faire glisser côté cru dans la poêle.","4-5 minutes de plus. Le cœur doit rester légèrement moelleux."],
+  tip:"4 portions, 4 jours au frigo, se mange froide et se transporte. Elle règle à la fois le goûter en amphi, le déjeuner sans micro-ondes et le dépannage du soir.",
+  err:"Rate le retournement une fois, tu l'auras la seconde. Ça reste mangeable dans tous les cas."},
+
+ gouter:{n:"Sachets de goûter × 6",art:"bag",t:10,kcal:600,p:18,tag:"batch",star:1,
+  usedIn:"Goûter de 16h30, tous les jours de la semaine",
+  usedIn:"Goûter de 16h30, tous les jours de la semaine",
+  ing:[["Amandes ou noix","40 g / sachet"],["Dattes","60 g / sachet"],["Comté en dés","40 g / sachet"]],
+  st:["Remplir 6 sachets le samedi.","En prendre un chaque matin.","Ne plus y penser."],
+  tip:"400 mg de calcium par sachet. C'est ce qui règle ton problème de goûter en amphi sans préparation quotidienne."},
+
+ barres:{n:"Barres maison × 12",art:"bag",t:20,kcal:250,p:6,tag:"batch",
+  usedIn:"Sac du dimanche · Glucides à mi-séance en mer",
+  ing:[["Dattes dénoyautées","200 g"],["Flocons d'avoine","150 g"],["Amandes concassées","100 g"],["Beurre de cacahuète","3 c. à s."],["Miel","2 c. à s."]],
+  st:["Mixer les dattes en pâte (trempées 10 min dans l'eau chaude si sèches).","Mélanger avec tous les autres ingrédients.","Tasser fermement dans un plat tapissé de papier cuisson.","Frigo 2 heures, puis couper en 12.","Emballer individuellement. 2 semaines au frigo."],
+  tip:"Zéro soja, contrairement à toutes les barres du commerce."},
+
+ thermos:{n:"Thermos du dimanche",art:"thermos",t:3,kcal:120,p:0,tag:"dimanche",star:1,
+  ing:[["Thé noir fort","500 ml"],["Miel","3 c. à c."],["Sel","1 grosse pincée"]],
+  st:["Remplir le thermos dimanche 7h45.","Boire dès la sortie de l'eau, avant même de te rhabiller."],
+  err:"Le sel n'est pas facultatif. Le froid provoque une natriurèse : tu perds du sodium en plus de l'eau, et l'immersion supprime la sensation de soif.",
+  tip:"Version salée : bouillon de volaille + 1 c. à c. de miel. Vérifie l'étiquette du bouillon cube, le soja y est fréquent."},
+
+ urgence:{n:"Riz, sardines, épinards",art:"fish",t:6,kcal:750,p:40,tag:"urgence",star:1,
+  ing:[["Riz micro-ondes","1 sachet"],["Sardines","1 boîte"],["Épinards en boîte","1"],["Huile d'olive, citron",""]],
+  st:["Riz 2 min au micro-ondes.","Épinards égouttés et rincés, réchauffés.","Sardines par-dessus, huile d'olive, citron."],
+  tip:"400 mg de calcium, 6 minutes. Ce n'est pas un échec — c'est même une bonne journée nutritionnelle."},
+
+ urgence2:{n:"Trois œufs sur pâtes",art:"egg",t:5,kcal:900,p:40,tag:"urgence",
+  ing:[["Pâtes cuites","1 portion","feculents"],["Œufs","3"],["Parmesan","30 g"],["Huile d'olive, poivre",""]],
+  st:["Pâtes réchauffées.","Œufs au plat : poêle FROIDE, huile généreuse, casser les œufs, PUIS allumer à feu moyen.","Arroser le jaune à la cuillère avec l'huile chaude.","Poser sur les pâtes, parmesan, poivre."]}
+};
+
+/* ============================================================
+   SEMAINE
+   ============================================================ */
+const DAYS=[
+ {k:"lun",n:"Lundi",label:"LUN",load:"mid",title:"Piscine",kcal:3200,
+  slots:[
+   {h:"7h45",role:"Petit-déjeuner",r:"porridge"},
+   {h:"10h30",role:"En-cas",txt:"Skyr 200 g + 50 g de dattes",note:"+ 4 g de créatine",kcal:350},
+   {h:"12h45",role:"Déjeuner",r:"bowl"},
+   {h:"15h30",role:"Repère",txt:"Dernier café de la journée",kcal:0,flat:1},
+   {h:"16h30",role:"Goûter",r:"gouter"},
+   {h:"19h00",role:"Séance · 60 min",txt:"Piscine",sess:1,note:"Gourde au bord du bassin"},
+   {h:"20h45",role:"Dîner",r:"sardines"}
+  ]},
+ {k:"mar",n:"Mardi",label:"MAR",load:"mid",title:"Renfo A",kcal:3000,
+  slots:[
+   {h:"7h30",role:"Prophylaxie",txt:"Mini-séance épaule 10 min",note:"Gélatine 15 g + vitamine C 200 mg pris 60 min avant",kcal:0,flat:1},
+   {h:"7h45",role:"Petit-déjeuner",r:"porridge"},
+   {h:"10h30",role:"En-cas",txt:"Skyr + fruits secs",kcal:350},
+   {h:"12h45",role:"Déjeuner",r:"tortillaplate"},
+   {h:"16h30",role:"Goûter",r:"gouter",note:"Sans les dattes — jour à 3000"},
+   {h:"19h00",role:"Séance · 50 min",txt:"Renfo A — poussée, haut du corps",sess:1},
+   {h:"20h45",role:"Dîner",r:"poulet"}
+  ],
+  warn:"Aucune douche froide ni bain froid ce soir. Le froid post-musculation émousse les adaptations de force."},
+ {k:"mer",n:"Mercredi",label:"MER",load:"mid",title:"Course + cuisine",kcal:3200,
+  slots:[
+   {h:"7h45",role:"Petit-déjeuner",r:"porridge"},
+   {h:"10h30",role:"En-cas",txt:"Skyr + fruits secs",kcal:350},
+   {h:"12h45",role:"Déjeuner",r:"bowl"},
+   {h:"16h30",role:"Goûter",r:"gouter"},
+   {h:"19h00",role:"Séance · 50 min",txt:"Course structurée",sess:1,note:"Cadence 175–180 pas/min"},
+   {h:"20h15",role:"Cuisine · 25 min",txt:"Session 2 — le plat mijoté",sess:1,note:"Couvre mercredi soir, jeudi et vendredi midi"},
+   {h:"20h45",role:"Dîner",r:"chili"}
+  ]},
+ {k:"jeu",n:"Jeudi",label:"JEU",load:"mid",title:"Renfo B",kcal:3000,
+  slots:[
+   {h:"7h30",role:"Prophylaxie",txt:"Mini-séance épaule + gélatine",kcal:0,flat:1},
+   {h:"7h45",role:"Petit-déjeuner",r:"porridge"},
+   {h:"10h30",role:"En-cas",txt:"Skyr + fruits secs",kcal:350},
+   {h:"12h45",role:"Déjeuner",r:"chili",note:"Portion du mercredi + riz"},
+   {h:"16h30",role:"Goûter",r:"gouter",note:"Sans les dattes"},
+   {h:"19h00",role:"Séance · 50 min",txt:"Renfo B — tirage, chaîne postérieure",sess:1},
+   {h:"20h45",role:"Dîner",r:"omelette"}
+  ],
+  warn:"Aucune douche froide ni bain froid ce soir."},
+ {k:"ven",n:"Vendredi",label:"VEN",load:"hard",title:"Piscine 20h–22h · jour inversé",kcal:4050,
+  slots:[
+   {h:"7h45",role:"Petit-déjeuner",r:"porridge"},
+   {h:"8h00",role:"À préparer",txt:"Le tupperware de récup, pour ce soir",r:"recup",kcal:0,prep:1},
+   {h:"10h30",role:"En-cas",txt:"Skyr + fruits secs",kcal:350},
+   {h:"12h45",role:"Déjeuner",r:"chili",note:"Féculent généreux"},
+   {h:"15h00",role:"Repère",txt:"Dernier café — plus tôt que d'habitude",kcal:0,flat:1},
+   {h:"16h00",role:"Goûter",r:"gouter"},
+   {h:"18h15",role:"Dîner complet",r:"vendredi",note:"1h45 de digestion avant de nager"},
+   {h:"20h00",role:"Séance · 2 h",txt:"Piscine",sess:1,note:"750 ml d'eau sur les deux heures"},
+   {h:"22h20",role:"Récupération",r:"recup"}
+  ],
+  warn:"Jour le plus calorique de la semaine. Deux heures d'eau à 68 kg, c'est cher — ne le coupe pas."},
+ {k:"sam",n:"Samedi",label:"SAM",load:"easy",title:"Récup + batch cooking",kcal:2800,
+  slots:[
+   {h:"8h30",role:"Petit-déjeuner",r:"porridge"},
+   {h:"9h00",role:"Prophylaxie",txt:"Mini-séance épaule + gélatine",kcal:0,flat:1},
+   {h:"10h00",role:"Courses",txt:"La liste de la semaine",kcal:0,flat:1},
+   {h:"11h00",role:"Cuisine · 75 min",txt:"Session 1 — le gros batch",sess:1,note:"Couvre dimanche, lundi, mardi"},
+   {h:"13h00",role:"Déjeuner",r:"poelee",note:"Allégé en féculent"},
+   {h:"15h00",role:"Séance · 20 min",txt:"Récupération active + mobilité",sess:1},
+   {h:"20h00",role:"Dîner",r:"maquereau"}
+  ],
+  warn:"Prépare le sac du dimanche ce soir : thermos rincé, 2 barres, gourde, combinaison, palmes."},
+ {k:"dim",n:"Dimanche",label:"DIM",load:"hard",title:"Mer, Saint-Malo",kcal:3600,
+  slots:[
+   {h:"7h30",role:"Petit-déjeuner",txt:"80 g de flocons + banane + miel + 2 œufs durs",note:"Peu de fibres avant la mer",kcal:750},
+   {h:"7h45",role:"À préparer",r:"thermos",prep:1},
+   {h:"9h00",role:"Route",txt:"1 h jusqu'à Saint-Malo",kcal:0,flat:1},
+   {h:"10h00",role:"Séance · 75–90 min",txt:"Mer et plage",sess:1,note:"Si plus de 75 min : 30 g de glucides à mi-séance"},
+   {h:"11h45",role:"Fenêtre critique",txt:"Thermos D'ABORD, avant de te rhabiller. Puis 55 g de glucides + 25 g de protéines",kcal:450,crit:1},
+   {h:"13h30",role:"Déjeuner",r:"rizfrit"},
+   {h:"16h30",role:"Goûter",txt:"Fruits secs, oléagineux, skyr",kcal:400},
+   {h:"20h00",role:"Dîner",r:"sardines",note:"Le plus gros de la semaine"}
+  ],
+  warn:"La température centrale continue de chuter environ 15 minutes après la sortie de l'eau — exactement quand tu n'as envie de rien. Le thermos passe avant tout le reste."}
+];
+
+/* ============================================================
+   COURSES
+   ============================================================ */
+const SHOP=[
+ {r:"Le poste n°1",i:[{n:"Œufs",q:"30",p:7.5,key:1,mkt:1}]},
+ {r:"Laitages",i:[
+   {n:"Skyr ou fromage blanc",q:"2 kg",p:7},
+   {n:"Comté ou emmental",q:"400 g",p:5,mkt:1},
+   {n:"Yaourts nature",q:"6",p:1.2}]},
+ {r:"Viande et poisson",i:[
+   {n:"Poulet — achat du samedi",q:"600 g",p:4.5},
+   {n:"Poulet ou steak haché 5 % — mercredi",q:"600 g",p:4},
+   {n:"Sardines et maquereau en boîte",q:"8 boîtes",p:10.4,key:1},
+   {n:"Thon en boîte",q:"3 boîtes",p:4.5},
+   {n:"Maquereaux frais — samedi",q:"2",p:4,mkt:1}]},
+ {r:"Féculents",i:[
+   {n:"Riz",q:"1 kg",p:2},
+   {n:"Pâtes",q:"1 kg",p:1.5},
+   {n:"Flocons d'avoine",q:"1 kg",p:2},
+   {n:"Pain complet",q:"2",p:3},
+   {n:"Pommes de terre",q:"2 kg",p:2.5,mkt:1}]},
+ {r:"Légumineuses",i:[
+   {n:"Lentilles corail",q:"500 g",p:2.5},
+   {n:"Pois chiches",q:"2 boîtes",p:2},
+   {n:"Haricots rouges",q:"2 boîtes",p:2}]},
+ {r:"Légumes de garde",i:[
+   {n:"Oignons",q:"1 filet",p:1.5,mkt:1},
+   {n:"Ail",q:"1 tête",p:.8,mkt:1},
+   {n:"Patates douces",q:"1 kg",p:3,mkt:1},
+   {n:"Carottes",q:"1 kg",p:1.5,mkt:1},
+   {n:"Courge",q:"1",p:2.5,mkt:1},
+   {n:"Chou",q:"1",p:1.5,mkt:1}]},
+ {r:"Légumes en conserve",i:[
+   {n:"Tomates concassées",q:"4 boîtes",p:3.2},
+   {n:"Épinards",q:"2 boîtes",p:2},
+   {n:"Haricots verts ou ratatouille",q:"2 boîtes",p:2}]},
+ {r:"Fruits et secs",i:[
+   {n:"Bananes",q:"10",p:2.5,mkt:1},
+   {n:"Fruits de saison",q:"selon",p:4,mkt:1},
+   {n:"Amandes et noix",q:"500 g",p:7,amort:3},
+   {n:"Dattes et abricots secs",q:"500 g",p:4,amort:2}]},
+ {r:"Matières grasses",i:[
+   {n:"Huile d'olive",q:"1 L",p:8,amort:3},
+   {n:"Beurre de cacahuète",q:"1 pot",p:3,amort:2},
+   {n:"Beurre",q:"250 g",p:2.5}]},
+ {r:"Boisson",i:[
+   {n:"Eau calcique — Courmayeur ou Salvetat",q:"7 L",p:5,key:1}]}
+];
+
+/* ============================================================
+   SESSIONS CUISINE
+   ============================================================ */
+const COOK=[
+ {n:"Session 1 — le gros batch",when:"Samedi, 11h00",dur:75,
+  covers:"Dimanche, lundi, mardi",
+  steps:[["0 min","Four à 200 °C. Grande casserole d'eau sur le feu."],
+   ["0–10","Couper les légumes à rôtir : carottes, oignons, patate douce, courge. Plaque, huile d'olive, sel, herbes → four 35 min."],
+   ["10–15","Lancer 300 g de riz."],
+   ["15–30","Cuire 600 g de poulet — 2e plaque au four, ou poêle. Assaisonner franchement : il sera mangé froid toute la semaine."],
+   ["30–45","Les 12 œufs durs. Pendant la cuisson : égoutter le riz et l'étaler pour refroidir."],
+   ["45–65","La tortilla espagnole. C'est la partie qui demande le plus d'attention."],
+   ["65–75","Les 6 sachets de goûter. Portionner, étiqueter avec la date, ranger."]],
+  yield:["300 g de riz cuit — 3 jours","600 g de poulet cuit — 3 jours","1 plaque de légumes rôtis — 3 jours","12 œufs durs — 5 jours","1 tortilla, 4 portions — 4 jours","6 sachets de goûter"]},
+ {n:"Session 2 — le plat mijoté",when:"Mercredi, 20h15",dur:25,
+  covers:"Mercredi soir, jeudi, vendredi midi",
+  steps:[["0–5","Lancer 300 g de pâtes ou de riz."],
+   ["5–25","Le plat mijoté, 3 portions : chili une semaine, dahl la suivante."],
+   ["en //","6 œufs durs de plus si le stock est bas."]],
+  yield:["3 portions de chili ou de dahl — 4 jours","300 g de féculent cuit — 3 jours"]}
+];
+
+const RULES=[
+ ["01","Le petit-déjeuner ne se saute pas","Même sans faim. C'est lui qui porte la journée."],
+ ["02","Pas de froid après le renfo","Mardi et jeudi. L'immersion froide post-musculation atténue la signalisation anabolique et émousse les gains de force."],
+ ["03","Gourde au bord du bassin","Lundi et vendredi. L'immersion supprime la sensation de soif et augmente la production d'urine — tu ne sentiras rien. Bois quand même."],
+ ["04","Thermos avant de te rhabiller","Dimanche. Chaud, sucré et salé. Le réchauffement passe par l'intérieur."],
+ ["05","Dernier café à 15h30","15h00 le vendredi. Demi-vie de 5 à 6 heures — c'est la règle la plus dure à tenir et la plus rentable."]
+];
+const FALLBACK=[
+ ["6 séances","Tout"],["5","Tout sauf un renfo"],["4","Piscines, course et mer. Micro-renfo collé en fin de séance"],["3","Vendredi, dimanche et une piscine"],["2","Vendredi et dimanche"],["1","Une séance d'eau, point"]
+];
+
+/* ============================================================
+   ÉTAT (persistant si dispo, sinon en mémoire)
+   ============================================================ */
+let state={shop:{},steps:{},src:{}};
+async function load(){
+  try{const r=await window.storage.get('semaine-state');if(r&&r.value){state=Object.assign({shop:{},steps:{},src:{}},JSON.parse(r.value));}}catch(e){}
+}
+async function save(){
+  try{await window.storage.set('semaine-state',JSON.stringify(state));}catch(e){}
+}
+
+/* ============================================================
+   RENDU
+   ============================================================ */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* compte à rebours */
+(function(){
+  const target=new Date(2027,3,24);
+  const d=Math.ceil((target-new Date())/864e5);
+  $('#cd').textContent=d>0?`J−${d} avant les sélections`:'Sélections';
+})();
+
+/* --- jours --- */
+let cur=(()=>{const i=new Date().getDay();return i===0?6:i-1})();
+function drawDays(){
+  $('#dayrow').innerHTML=DAYS.map((d,i)=>
+    `<button class="daybtn${i===cur?' on':''}" data-load="${d.load}" data-i="${i}" aria-label="${d.n}"><span>${d.label}</span><span class="dot"></span></button>`).join('');
+}
+function drawDay(){
+  const d=DAYS[cur];
+  let run=0;const tot=d.kcal;
+  const slots=d.slots.map(s=>{
+    const rec=s.r?R[s.r]:null;
+    const k=s.kcal!==undefined?s.kcal:(rec?rec.kcal:0);
+    run+=k;
+    const title=s.txt||(rec?rec.n:'');
+    const meta=[];
+    if(rec&&!s.flat&&!s.sess){meta.push(`<b>${rec.kcal}</b> kcal`);meta.push(`<b>${rec.p}</b> g prot.`);meta.push(`${rec.t} min`);}
+    else if(k>0)meta.push(`<b>${k}</b> kcal`);
+    if(s.note)meta.push(s.note);
+    return `<div class="slot${s.sess?' session':''}">
+      <span class="clock mono">${s.h}</span>
+      <${rec?'button':'div'} class="card${rec?'':' static'}"${rec?` data-rec="${s.r}"`:''}>
+        ${rec?'<span class="open-hint">RECETTE →</span>':''}
+        <span class="role">${esc(s.role)}</span>
+        <span class="title">${esc(title)}</span>
+        ${meta.length?`<span class="meta">${meta.map(m=>`<span>${m}</span>`).join('')}</span>`:''}
+      </${rec?'button':'div'}></div>`;
+  }).join('');
+  $('#dayview').innerHTML=`
+    <div class="dayhead">
+      <div><h2>${d.n}</h2><span class="tag">${esc(d.title)}</span></div>
+      <div class="target"><b>${d.kcal.toLocaleString('fr-FR')}</b><span>KCAL CIBLE</span></div>
+    </div>
+    ${d.warn?`<div class="warn">${d.warn}</div>`:''}
+    <div class="timeline"><div class="tide" id="tide"></div>${slots}</div>`;
+  requestAnimationFrame(()=>{const t=$('#tide');if(t)t.style.height=Math.min(100,run/tot*100)+'%';});
+}
+
+/* --- recettes --- */
+const TAGS=["tout","petit-déj","déjeuner","dîner","batch","urgence"];
+let filt="tout";
+function drawFilters(){
+  $('#filters').innerHTML=TAGS.map(t=>`<button class="chip${t===filt?' on':''}" data-tag="${t}">${t}</button>`).join('');
+}
+function drawRecipes(){
+  const list=Object.entries(R).filter(([,r])=>filt==="tout"||r.tag===filt);
+  $('#rgrid').innerHTML=list.map(([k,r])=>`
+    <button class="rcard" data-rec="${k}">
+      <span class="thumb">${ART[r.art]}</span>
+      <span class="rbody">
+        <span class="title">${r.star?'<span class="star">★</span> ':''}${esc(r.n)}</span>
+        <span class="meta"><span>${r.t} min</span><span>${r.kcal} kcal</span><span>${r.p} g</span></span>
+      </span>
+    </button>`).join('');
+}
+
+/* --- modal recette --- */
+let trail=[];
+function openRec(k){trail=[k];render()}
+function pushRec(k){trail.push(k);render()}
+function goBack(){if(trail.length<2)return closeRec();trail.pop();render()}
+function render(){
+  const k=trail[trail.length-1];
+  const r=R[k];if(!r)return;
+  const back=trail.length>1?`<button class="backbtn" id="bk">← ${esc(R[trail[trail.length-2]].n)}</button>`:'';
+  $('#sheet').innerHTML=`
+    <div class="hero">${ART[r.art]}${back}<button class="closebtn" id="cl" aria-label="Fermer">✕</button></div>
+    <div class="body">
+      <h3>${esc(r.n)}</h3>
+      ${r.intro?`<p style="margin:12px 0 0;font-size:15px;color:var(--mute)">${esc(r.intro)}</p>`:''}
+      <div class="stats">
+        <div class="stat"><b>${r.t}</b><span>minutes</span></div>
+        <div class="stat"><b>${r.kcal}</b><span>kcal</span></div>
+        <div class="stat"><b>${r.p}</b><span>g protéines</span></div>
+      </div>
+      ${r.from?`<div class="origin"><span class="mark">ASSEMBLAGE</span><span>${esc(r.from)}</span></div>`:''}
+      ${r.usedIn?`<div class="origin out"><span class="mark">SE RETROUVE&nbsp;DANS</span><span>${esc(r.usedIn)}</span></div>`:''}
+      <h4>Ingrédients</h4>
+      ${r.ing.map(i=>i[2]&&R[i[2]]
+        ? `<button class="ing" data-rec="${i[2]}" data-push="1"><span><span class="nm">${esc(i[0])}</span><span class="arrow">VOIR LA RECETTE →</span></span><span class="q">${esc(i[1])}</span></button>`
+        : `<div class="ing"><span>${esc(i[0])}</span><span class="q">${esc(i[1])}</span></div>`).join('')}
+      <h4>Méthode</h4>
+      <ol>${r.st.map(s=>`<li>${esc(s)}</li>`).join('')}</ol>
+      ${r.err?`<div class="err">${esc(r.err)}</div>`:''}
+      ${r.tip?`<div class="tip"><span class="eyebrow">À savoir</span>${esc(r.tip)}</div>`:''}
+    </div>`;
+  $('#scrim').classList.add('on');
+  $('#sheet').scrollTop=0;
+  document.body.style.overflow='hidden';
+  $('#cl').focus();
+}
+function closeRec(){$('#scrim').classList.remove('on');document.body.style.overflow='';trail=[]}
+
+/* --- courses --- */
+function drawShop(){
+  let n=0,done=0,drive=0,mkt=0,amortNote=0;
+  const html=SHOP.map((g,gi)=>`
+    <div class="rayon"><h3>${esc(g.r)}</h3>
+    ${g.i.map((it,ii)=>{
+      const id=gi+'-'+ii;n++;
+      const on=state.shop[id];if(on)done++;
+      const src=(state.src[id]!==undefined)?state.src[id]:(it.mkt?1:0);
+      const cost=it.amort?it.p/it.amort:it.p;
+      if(src)mkt+=cost;else drive+=cost;
+      if(it.amort)amortNote=1;
+      return `<div class="item${on?' done':''}${it.key?' key':''}">
+        <span class="hit" data-shop="${id}">
+          <span class="box"><svg viewBox="0 0 12 12"><path d="M2 6.5l2.5 2.5L10 3"/></svg></span>
+          <span class="lbl">${esc(it.n)}${it.amort?'<sup>*</sup>':''}</span>
+        </span>
+        <span class="right">
+          <span class="qty">${esc(it.q)}</span>
+          <button class="src${src?' mk':''}" data-src="${id}" aria-label="Changer la source">${src?'Marché':'Drive'}</button>
+          <span class="pr">${cost.toFixed(2).replace('.',',')}&nbsp;€</span>
+        </span>
+      </div>`;
+    }).join('')}</div>`).join('');
+  $('#shoplist').innerHTML=html+(amortNote?`<p class="foot">* Produit qui tient 2 à 3 semaines. Le prix affiché est déjà amorti sur la semaine.</p>`:'');
+  $('#pbar').style.width=(n?done/n*100:0)+'%';
+  $('#ptxt').textContent=`${done} / ${n} articles cochés`;
+  $('#budget').innerHTML=`
+    <div class="bud"><span class="eyebrow">À TA CHARGE · DRIVE</span><b>${drive.toFixed(0)} €</b></div>
+    <div class="bud alt"><span class="eyebrow">AU MARCHÉ · PARENTS</span><b>${mkt.toFixed(0)} €</b></div>
+    <div class="bud tot"><span class="eyebrow">TOTAL SEMAINE</span><b>${(drive+mkt).toFixed(0)} €</b></div>`;
+}
+
+function copyList(){
+  let out=["LISTE DRIVE — semaine"];
+  SHOP.forEach((g,gi)=>{
+    const l=g.i.filter((it,ii)=>{
+      const id=gi+'-'+ii;const src=(state.src[id]!==undefined)?state.src[id]:(it.mkt?1:0);
+      return !src;});
+    if(l.length){out.push("");out.push(g.r.toUpperCase());l.forEach(it=>out.push("- "+it.n+"  ("+it.q+")"));}
+  });
+  const t=out.join("\n");
+  navigator.clipboard.writeText(t).then(()=>{
+    const b=$('#copybtn');const o=b.textContent;b.textContent="Liste copiée";
+    setTimeout(()=>b.textContent=o,1800);
+  }).catch(()=>{});
+}
+
+/* --- cuisine --- */
+function drawCook(){
+  $('#sessions').innerHTML=COOK.map((c,ci)=>`
+    <div class="sesscard">
+      <div class="sesstop">
+        <div><span class="when">${esc(c.when)}</span><h3>${esc(c.n)}</h3></div>
+        <div class="dur">${c.dur}<span>MINUTES</span></div>
+      </div>
+      ${c.steps.map((s,si)=>{
+        const id=ci+'-'+si;const on=state.steps[id];
+        return `<div class="step${on?' done':''}" data-step="${id}"><span class="at">${esc(s[0])}</span><span class="txt">${esc(s[1])}</span></div>`;
+      }).join('')}
+      <div class="yield"><span class="eyebrow">Ce que ça couvre — ${esc(c.covers)}</span>
+        <ul>${c.yield.map(y=>`<li>${esc(y)}</li>`).join('')}</ul></div>
+    </div>`).join('');
+}
+
+/* --- règles --- */
+function drawRules(){
+  $('#rules').innerHTML=RULES.map(r=>`<div class="rule-item"><span class="n mono">${r[0]}</span><div><b>${esc(r[1])}</b><p>${esc(r[2])}</p></div></div>`).join('');
+  $('#fallback').innerHTML=FALLBACK.map(f=>`<tr><td>${esc(f[0])}</td><td>${esc(f[1])}</td></tr>`).join('');
+}
+
+/* ============================================================
+   SUIVI
+   ------------------------------------------------------------
+   État stocké sous sa propre clé, 'semaine-suivi', pour ne pas
+   toucher à l'objet state existant.
+   ============================================================ */
+
+/* ---- repères du cycle : les seules valeurs à retoucher ---- */
+const SV_ANCRE = { d: '2026-08-30', kg: 68 };   // point de départ de la trajectoire
+const SV_FIN   = '2027-04-24';                  // date des sélections
+const SV_MIN_S = 0.100;                         // gain hebdo bas, en kg
+const SV_MAX_S = 0.150;                         // gain hebdo haut, en kg
+const SV_CIBLE = [71, 72];                      // fenêtre de poids visée en avril
+const SV_PESEES_SEM = 3;                        // pesées attendues par semaine
+
+const SV_TESTS = [
+  { n:1, nom:'Test 1 — référence',   when:'début octobre 2026', d:'2026-10-04', cible:null },
+  { n:2, nom:'Test 2 — mi-cycle',    when:'fin novembre 2026',  d:'2026-11-29', cible:12   },
+  { n:3, nom:'Test 3 — retour d\'eau',when:'fin février 2027',  d:'2027-02-28', cible:8    },
+  { n:4, nom:'Test 4 — affûtage',    when:'fin mars 2027',      d:'2027-03-28', cible:5    }
+];
+
+const SV_SANG = [
+  { n:1, when:'octobre 2026', d:'2026-10-01' },
+  { n:2, when:'février 2027', d:'2027-02-01' }
+];
+
+/* Seuils indicatifs, pas un diagnostic — c'est le médecin qui lit le bilan.
+   Ferritine en µg/L, vitamine D (25-OH) en ng/mL. */
+const SV_SEUIL = { fer: 30, vd: 30 };
+
+/* jours porteurs d'une séance : lun mar mer jeu ven — sam repos — dim */
+const SV_PREVU = [1,1,1,1,1,0,1];
+const SV_DUR   = [0,0,0,0,1,0,1];              // vendredi et dimanche
+const SV_LAB   = ['LUN','MAR','MER','JEU','VEN','SAM','DIM'];
+
+/* ---------- état ---------- */
+let SV = { w:{}, s:{}, f:{}, t:{}, b:{} };
+let svMode = 'cycle';   // 'cycle' | 'recent'
+let svWk   = 0;         // décalage de semaine, 0 = semaine en cours
+
+async function svLoad(){
+  try{
+    const r = await window.storage.get('semaine-suivi');
+    if(r && r.value) SV = Object.assign({w:{},s:{},f:{},t:{},b:{}}, JSON.parse(r.value));
+  }catch(e){}
+}
+async function svSave(){
+  try{ await window.storage.set('semaine-suivi', JSON.stringify(SV)); }catch(e){}
+}
+
+/* ---------- dates ---------- */
+const SV_D0  = svFromIso(SV_ANCRE.d);
+const SV_DF  = svFromIso(SV_FIN);
+const JOUR   = 864e5;
+
+function svFromIso(s){ const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); }
+function svIso(dt){
+  return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
+}
+function svAdd(dt,n){ const d=new Date(dt); d.setDate(d.getDate()+n); return d; }
+function svLundi(dt){ const d=new Date(dt); const i=d.getDay(); d.setDate(d.getDate()-(i===0?6:i-1)); d.setHours(0,0,0,0); return d; }
+function svToday(){ const d=new Date(); d.setHours(0,0,0,0); return d; }
+function svCourt(dt){ return dt.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'}).replace('.',''); }
+function svJourMois(dt){ return dt.getDate()+'/'+(dt.getMonth()+1); }
+function svMois(dt){ return dt.toLocaleDateString('fr-FR',{month:'short'}).replace('.',''); }
+
+/* ---------- chronos ---------- */
+function svToSec(s){
+  if(s===null||s===undefined) return null;
+  s=String(s).trim().replace(',','.');
+  if(!s) return null;
+  const m=s.match(/^(\d+)\s*[:'hm]\s*(\d{1,2}(?:\.\d+)?)$/);
+  if(m) return (+m[1])*60+parseFloat(m[2]);
+  const v=parseFloat(s);
+  return isNaN(v)?null:v;
+}
+function svFmtSec(v){
+  if(v===null||v===undefined||isNaN(v)) return '—';
+  const m=Math.floor(v/60), s=v-m*60;
+  return m>0 ? m+':'+String(Math.round(s)).padStart(2,'0') : (Math.round(s*10)/10)+'s';
+}
+
+/* ---------- trajectoire de poids ---------- */
+function svTraj(dt){
+  let sem=(dt-SV_D0)/(7*JOUR);
+  if(sem<0) sem=0;
+  return { bas: SV_ANCRE.kg+SV_MIN_S*sem, haut: SV_ANCRE.kg+SV_MAX_S*sem };
+}
+function svPesees(){
+  return Object.keys(SV.w).sort().map(k=>({ iso:k, d:svFromIso(k), kg:+SV.w[k] }));
+}
+/* moyenne glissante sur 3 pesées — une pesée isolée varie de près d'un kilo */
+function svLisse(arr){
+  return arr.map((e,i)=>{
+    const w=arr.slice(Math.max(0,i-2), i+1);
+    return { d:e.d, kg:w.reduce((s,x)=>s+x.kg,0)/w.length };
+  });
+}
+
+/* ============================================================
+   BLOC 1 — POIDS
+   ============================================================ */
+function svDrawPoids(){
+  const P=svPesees(), L=svLisse(P), t=svToday();
+  const dernier = P.length ? P[P.length-1] : null;
+  const moy     = L.length ? L[L.length-1].kg : null;
+  const tj      = svTraj(t);
+
+  let ecart=null, etat='', cls='';
+  if(moy!==null){
+    if(moy < tj.bas){ ecart = moy-tj.bas; etat='sous la bande'; cls='hot'; }
+    else if(moy > tj.haut){ ecart = moy-tj.haut; etat='au-dessus'; cls=''; }
+    else { ecart = 0; etat='dans la bande'; cls='alt'; }
+  }
+
+  /* pesées de la semaine en cours */
+  const l0=svLundi(t), l1=svAdd(l0,7);
+  const nSem = P.filter(e=>e.d>=l0 && e.d<l1).length;
+
+  const semRest = Math.max(0, Math.round((SV_DF-t)/(7*JOUR)));
+  const restant = moy!==null ? (SV_CIBLE[0]-moy) : null;
+
+  $('#sv-poids').innerHTML = `
+  <div class="sv-head">
+    <div><span class="eyebrow">Bloc 01</span><h3>Pesée au réveil</h3></div>
+    <span class="rt">${nSem} / ${SV_PESEES_SEM} cette semaine<br>${semRest} sem. avant avril</span>
+  </div>
+
+  <div class="sv-nums">
+    <div class="sv-num"><span class="eyebrow">Dernière</span>
+      <b>${dernier ? dernier.kg.toFixed(1)+' kg' : '—'}</b>
+      <small>${dernier ? svCourt(dernier.d) : 'aucune pesée'}</small></div>
+    <div class="sv-num ${cls}"><span class="eyebrow">Moyenne 3</span>
+      <b>${moy!==null ? moy.toFixed(1)+' kg' : '—'}</b>
+      <small>${etat||'—'}</small></div>
+    <div class="sv-num"><span class="eyebrow">Attendu ce jour</span>
+      <b>${tj.bas.toFixed(1)}</b>
+      <small>bande ${tj.bas.toFixed(1)}–${tj.haut.toFixed(1)}</small></div>
+    <div class="sv-num"><span class="eyebrow">Reste à prendre</span>
+      <b>${restant!==null ? (restant>0?'+':'')+restant.toFixed(1) : '—'}</b>
+      <small>pour ${SV_CIBLE[0]} kg</small></div>
+  </div>
+
+  <div class="sv-chips">
+    <button class="sv-chip${svMode==='cycle'?' on':''}" data-sv="mode" data-v="cycle">Cycle entier</button>
+    <button class="sv-chip${svMode==='recent'?' on':''}" data-sv="mode" data-v="recent">8 semaines</button>
+  </div>
+
+  ${svChartPoids()}
+
+  <div class="sv-legend">
+    <span><i class="band"></i>bande +100 à +150 g/sem.</span>
+    <span><i style="background:#101F1C"></i>moyenne glissante</span>
+    <span><i style="background:#0F4C41"></i>pesées</span>
+    <span><i style="background:#DD3F14"></i>cible ${SV_CIBLE[0]}–${SV_CIBLE[1]} kg</span>
+  </div>
+
+  <div class="sv-card" style="margin-top:14px">
+    <div class="sv-form">
+      <div class="sv-f" style="min-width:132px"><label>Date</label>
+        <input class="sv-in" type="date" id="sv-wd" value="${svIso(t)}" max="${svIso(t)}"></div>
+      <div class="sv-f"><label>Poids (kg)</label>
+        <input class="sv-in" type="number" id="sv-wv" step="0.1" min="45" max="120"
+               inputmode="decimal" placeholder="68.4"></div>
+      <button class="sv-btn" data-sv="addw">Enregistrer</button>
+    </div>
+    ${svRowsPoids(P)}
+  </div>`;
+}
+
+function svRowsPoids(P){
+  if(!P.length) return `<div class="sv-empty">Aucune pesée. La première fixe le point de départ réel — pèse-toi au réveil, à jeun, après être passé aux toilettes.</div>`;
+  const last = P.slice(-8).reverse();
+  return `<div class="sv-rows">` + last.map((e,i)=>{
+    const prev = last[i+1];
+    const dl = prev ? e.kg-prev.kg : null;
+    return `<div class="sv-row">
+      <span class="d">${svCourt(e.d)}</span>
+      <span class="v">${e.kg.toFixed(1)} kg</span>
+      <span class="delta">${dl===null?'':(dl>0?'+':'')+dl.toFixed(1)}</span>
+      <button class="sv-del" data-sv="delw" data-k="${e.iso}" aria-label="Supprimer">×</button>
+    </div>`;
+  }).join('') + `</div>`;
+}
+
+function svChartPoids(){
+  const W=390,H=232,L=27,R=10,T=11,B=23, iw=W-L-R, ih=H-T-B;
+  const P=svPesees(), Lis=svLisse(P), t=svToday();
+
+  let x0,x1;
+  if(svMode==='recent'){
+    x0=svAdd(t,-56); x1=svAdd(t,7);
+    if(x0<SV_D0) x0=new Date(SV_D0);
+  }else{ x0=new Date(SV_D0); x1=new Date(SV_DF); }
+
+  const dans = P.filter(e=>e.d>=x0 && e.d<=x1).map(e=>e.kg);
+  const bornes=[svTraj(x0).bas,svTraj(x0).haut,svTraj(x1).bas,svTraj(x1).haut];
+  let lo=Math.min(...bornes, ...(dans.length?dans:[999]));
+  let hi=Math.max(...bornes, ...(dans.length?dans:[-999]));
+  if(svMode==='cycle'){ lo=Math.min(lo,SV_CIBLE[0]); hi=Math.max(hi,SV_CIBLE[1]); }
+  lo=Math.floor((lo-0.6)*2)/2; hi=Math.ceil((hi+0.6)*2)/2;
+
+  const px=d=>L+(d-x0)/(x1-x0)*iw;
+  const py=v=>T+(hi-v)/(hi-lo)*ih;
+
+  /* grille horizontale */
+  const pas=(hi-lo)>6?1:0.5;
+  let g='';
+  for(let v=Math.ceil(lo/pas)*pas; v<=hi+1e-9; v+=pas){
+    g+=`<line x1="${L}" y1="${py(v).toFixed(1)}" x2="${W-R}" y2="${py(v).toFixed(1)}" stroke="var(--rule)" stroke-width="1" opacity=".55"/>
+        <text x="${L-5}" y="${(py(v)+3.3).toFixed(1)}" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="var(--mute)">${v % 1 ? v.toFixed(1) : v}</text>`;
+  }
+
+  /* bande de trajectoire */
+  const N=48, hautPts=[], basPts=[];
+  for(let i=0;i<=N;i++){
+    const d=new Date(+x0+(x1-x0)*i/N), tj=svTraj(d);
+    hautPts.push(px(d).toFixed(1)+','+py(tj.haut).toFixed(1));
+    basPts.push(px(d).toFixed(1)+','+py(tj.bas).toFixed(1));
+  }
+  const bande=`<polygon points="${hautPts.join(' ')} ${basPts.slice().reverse().join(' ')}" fill="var(--sea-soft)" opacity=".75"/>
+    <polyline points="${basPts.join(' ')}" fill="none" stroke="var(--sea)" stroke-width="1.2" stroke-dasharray="5 4" opacity=".8"/>
+    <polyline points="${hautPts.join(' ')}" fill="none" stroke="var(--sea)" stroke-width="1.2" stroke-dasharray="5 4" opacity=".45"/>`;
+
+  /* fenêtre cible */
+  let cible='';
+  if(SV_CIBLE[1]<=hi && SV_CIBLE[0]>=lo){
+    cible=`<rect x="${L}" y="${py(SV_CIBLE[1]).toFixed(1)}" width="${iw}" height="${(py(SV_CIBLE[0])-py(SV_CIBLE[1])).toFixed(1)}" fill="var(--signal)" opacity=".07"/>
+      <line x1="${L}" y1="${py(SV_CIBLE[0]).toFixed(1)}" x2="${W-R}" y2="${py(SV_CIBLE[0]).toFixed(1)}" stroke="var(--signal)" stroke-width="1" stroke-dasharray="3 3" opacity=".55"/>
+      <line x1="${L}" y1="${py(SV_CIBLE[1]).toFixed(1)}" x2="${W-R}" y2="${py(SV_CIBLE[1]).toFixed(1)}" stroke="var(--signal)" stroke-width="1" stroke-dasharray="3 3" opacity=".55"/>`;
+  }
+
+  /* axe des mois */
+  let ax='';
+  const cur=new Date(x0.getFullYear(),x0.getMonth(),1);
+  if(cur<x0) cur.setMonth(cur.getMonth()+1);
+  for(let d=new Date(cur); d<=x1; d.setMonth(d.getMonth()+1)){
+    const X=px(d);
+    if(X<L-1||X>W-R+1) continue;
+    ax+=`<line x1="${X.toFixed(1)}" y1="${T}" x2="${X.toFixed(1)}" y2="${T+ih}" stroke="var(--rule)" stroke-width="1" opacity=".4"/>
+      <text x="${X.toFixed(1)}" y="${H-8}" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9" fill="var(--mute)">${svMois(d)}</text>`;
+  }
+
+  /* repère aujourd'hui */
+  let ajd='';
+  if(t>=x0 && t<=x1){
+    const X=px(t);
+    ajd=`<line x1="${X.toFixed(1)}" y1="${T}" x2="${X.toFixed(1)}" y2="${T+ih}" stroke="var(--ink)" stroke-width="1" stroke-dasharray="2 3" opacity=".5"/>`;
+  }
+
+  /* données */
+  const vus=P.filter(e=>e.d>=x0&&e.d<=x1);
+  const lisVus=Lis.filter(e=>e.d>=x0&&e.d<=x1);
+  const ligne = lisVus.length>1
+    ? `<polyline points="${lisVus.map(e=>px(e.d).toFixed(1)+','+py(e.kg).toFixed(1)).join(' ')}" fill="none" stroke="var(--ink)" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>` : '';
+  const pts = vus.map(e=>`<circle cx="${px(e.d).toFixed(1)}" cy="${py(e.kg).toFixed(1)}" r="2.4" fill="var(--sea)"/>`).join('');
+
+  const vide = P.length ? '' :
+    `<text x="${L+iw/2}" y="${T+ih/2}" text-anchor="middle" font-family="Karla, sans-serif" font-size="11" fill="var(--mute)" font-style="italic">La courbe apparaît dès la première pesée</text>`;
+
+  return `<svg class="sv-chart" viewBox="0 0 ${W} ${H}" role="img"
+    aria-label="Courbe de poids et trajectoire cible">
+    ${g}${bande}${cible}${ax}${ajd}${ligne}${pts}${vide}</svg>`;
+}
+
+/* ============================================================
+   BLOC 2 — SÉANCES
+   ============================================================ */
+function svDrawSeances(){
+  const t=svToday();
+  const l0=svAdd(svLundi(t), svWk*7);
+  const prevu=SV_PREVU.reduce((a,b)=>a+b,0);
+
+  const jours=SV_LAB.map((lab,i)=>{
+    const d=svAdd(l0,i), iso=svIso(d);
+    const off=!SV_PREVU[i], fait=!!SV.s[iso], fut=d>t;
+    const cl=['sv-day', off?'rest':'', fait?'done':'', SV_DUR[i]?'hard':'', (fut&&!fait)?'future':''].filter(Boolean).join(' ');
+    return `<button class="${cl}" ${off?'disabled':`data-sv="tog" data-k="${iso}"`}
+      aria-label="${lab} ${svCourt(d)}"><span>${lab}</span>
+      <span class="mk"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l6 6L20 6"/></svg></span>
+      <span style="font-size:9px">${d.getDate()}</span></button>`;
+  }).join('');
+
+  const fait=SV_LAB.reduce((a,_,i)=>a+(SV.s[svIso(svAdd(l0,i))]?1:0),0);
+
+  /* huit dernières semaines */
+  const barres=[];
+  for(let k=7;k>=0;k--){
+    const m=svAdd(svLundi(t),-k*7);
+    let n=0; for(let i=0;i<7;i++) if(SV.s[svIso(svAdd(m,i))]) n++;
+    barres.push({ m, n });
+  }
+  const tot=barres.reduce((a,b)=>a+b.n,0);
+  const moy=(tot/8).toFixed(1);
+
+  $('#sv-seances').innerHTML=`
+  <div class="sv-head">
+    <div><span class="eyebrow">Bloc 02</span><h3>Séances réalisées</h3></div>
+    <span class="rt">moyenne 8 sem.<br><b style="color:var(--ink)">${moy} / ${prevu}</b></span>
+  </div>
+
+  <div class="sv-card">
+    <div class="sv-wknav">
+      <button class="sv-arrow" data-sv="wk" data-v="-1" aria-label="Semaine précédente">‹</button>
+      <b>${svWk===0?'Cette semaine':'Semaine du '+svCourt(l0)} · ${fait} / ${prevu}</b>
+      <button class="sv-arrow" data-sv="wk" data-v="1" ${svWk>=0?'disabled':''} aria-label="Semaine suivante">›</button>
+    </div>
+    <div class="sv-days">${jours}</div>
+    <div class="sv-note">Samedi est un jour de repos, pas une séance manquée. Les contours orange marquent les deux séances dures.</div>
+  </div>
+
+  ${svChartSeances(barres,prevu)}`;
+}
+
+function svChartSeances(barres,prevu){
+  const W=390,H=132,L=19,R=8,T=15,B=21, iw=W-L-R, ih=H-T-B;
+  const bw=iw/barres.length;
+  let out='';
+  barres.forEach((b,i)=>{
+    const x=L+i*bw+bw*0.18, w=bw*0.64;
+    const h=ih*(b.n/prevu);
+    const op=(0.32+0.68*(b.n/prevu)).toFixed(2);
+    out+=`<rect x="${x.toFixed(1)}" y="${(T+ih-h).toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="2" fill="var(--sea)" opacity="${op}"/>
+      <text x="${(x+w/2).toFixed(1)}" y="${H-8}" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="8.5" fill="var(--mute)">${svJourMois(b.m)}</text>
+      <text x="${(x+w/2).toFixed(1)}" y="${(T+ih-h-4).toFixed(1)}" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9" fill="var(--ink)">${b.n||''}</text>`;
+  });
+  const yc=T;
+  out+=`<line x1="${L}" y1="${yc}" x2="${W-R}" y2="${yc}" stroke="var(--ink)" stroke-width="1" stroke-dasharray="4 4" opacity=".45"/>
+    <text x="${L-4}" y="${yc+3.2}" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="9" fill="var(--mute)">${prevu}</text>
+    <line x1="${L}" y1="${T+ih}" x2="${W-R}" y2="${T+ih}" stroke="var(--rule)" stroke-width="1"/>`;
+  return `<svg class="sv-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Séances par semaine sur huit semaines">${out}</svg>`;
+}
+
+/* ============================================================
+   BLOC 3 — RESSENTI J+1
+   ============================================================ */
+const SV_NIV=[ [1,'Frais'], [2,'Lourd'], [3,'Cassé'] ];
+
+function svDrawRessenti(){
+  const t=svToday();
+  /* J+1 des deux séances dures : samedi (après vendredi), lundi (après dimanche) */
+  const dates=[];
+  for(let k=0;k<28 && dates.length<6;k++){
+    const d=svAdd(t,-k), j=d.getDay();
+    if(j===6) dates.push({d, src:'vendredi'});
+    else if(j===1) dates.push({d, src:'dimanche'});
+  }
+
+  const lignes=dates.map(o=>{
+    const iso=svIso(o.d), v=SV.f[iso];
+    return `<div class="sv-feel">
+      <span class="d">${svCourt(o.d)}<em>après ${o.src}</em></span>
+      <span class="sv-lvls">${SV_NIV.map(n=>
+        `<button class="sv-lvl${v===n[0]?' on':''}" data-l="${n[0]}" data-sv="feel" data-k="${iso}" data-v="${n[0]}">
+          <span class="x">✕</span><span>${n[1]}</span></button>`).join('')}</span>
+    </div>`;
+  }).join('');
+
+  /* deux « cassé » consécutifs = signal de charge */
+  const rec=dates.map(o=>SV.f[svIso(o.d)]).filter(v=>v!==undefined);
+  const alerte = rec.length>=2 && rec[0]===3 && rec[1]===3;
+
+  $('#sv-ressenti').innerHTML=`
+  <div class="sv-head">
+    <div><span class="eyebrow">Bloc 03</span><h3>Ressenti J+1</h3></div>
+    <span class="rt">vendredi et dimanche<br>les deux séances dures</span>
+  </div>
+  <div class="sv-card" style="padding-top:6px">
+    ${lignes}
+    ${alerte?`<div class="sv-flag">Deux « cassé » d'affilée. Ce n'est pas un manque de volonté : c'est la récupération qui ne suit plus. Regarde d'abord le sommeil et les apports du vendredi avant de toucher au volume.</div>`:''}
+    <div class="sv-note">Une croix, au réveil, sans y réfléchir. La valeur de cette colonne vient de sa régularité, pas de sa précision.</div>
+  </div>`;
+}
+
+/* ============================================================
+   BLOC 4 — TESTS CHRONOMÉTRÉS
+   ============================================================ */
+function svEcart(o){
+  const a=svToSec(o&&o.b1), b=svToSec(o&&o.b2);
+  if(a===null||b===null||!a) return null;
+  return (b-a)/a*100;
+}
+
+function svDrawTests(){
+  const t=svToday();
+  let prochain=SV_TESTS.find(x=>svFromIso(x.d)>=t);
+
+  $('#sv-tests').innerHTML=`
+  <div class="sv-head">
+    <div><span class="eyebrow">Bloc 04</span><h3>Tests chronométrés</h3></div>
+    <span class="rt">${prochain?'prochain : '+prochain.when:'cycle terminé'}</span>
+  </div>
+  ${SV_TESTS.map(x=>svCardTest(x,t)).join('')}
+  <div class="sv-note">L'écart est calculé seul à partir des deux blocs. C'est lui l'indicateur principal : il dit ce que la fatigue coûte, ce qu'un temps sur 400 m pris à froid ne montre pas.</div>`;
+}
+
+function svCardTest(x,t){
+  const o=SV.t[x.n]||{};
+  const dt=svFromIso(x.d);
+  const passe=dt<t, actif=prochainTest()===x.n;
+  const e=svEcart(o);
+  const ok = e!==null && x.cible!==null && e<x.cible;
+  const prog=svProg400(x.n);
+
+  let verdict;
+  if(e===null) verdict=`<div class="sv-verdict wait">Écart non calculé — il faut les deux temps de bloc.</div>`;
+  else if(x.cible===null) verdict=`<div class="sv-verdict">Point de référence : ${e.toFixed(1)} %. C'est à partir de lui que se lisent les trois suivants.</div>`;
+  else if(ok) verdict=`<div class="sv-verdict">${e.toFixed(1)} % — sous la cible de ${x.cible} %.</div>`;
+  else verdict=`<div class="sv-verdict ko">${e.toFixed(1)} % — au-dessus de la cible de ${x.cible} %. L'écart entre les deux blocs se réduit par le volume aérobie et l'aisance dans l'eau, pas par la vitesse pure.</div>`;
+
+  return `<div class="sv-test${actif?' now':''}${passe&&!actif?' past':''}">
+    <div class="sv-ttop">
+      <div><span class="when">${x.when}</span><h4>${x.nom}</h4></div>
+      <div class="sv-goal">
+        <b class="${e===null?'':(x.cible===null?'':(ok?'ok':'ko'))}" id="sv-e${x.n}">${e===null?'—':e.toFixed(1)+' %'}</b>
+        ${x.cible!==null?`cible &lt; ${x.cible} %`:'référence'}
+      </div>
+    </div>
+    <div class="sv-tbody">
+      <div class="sv-form">
+        <div class="sv-f" style="min-width:130px"><label>Date réelle</label>
+          <input class="sv-in" type="date" data-svi="t" data-n="${x.n}" data-f="d" value="${o.d||x.d}"></div>
+        <div class="sv-f"><label>400 m</label>
+          <input class="sv-in" type="text" inputmode="numeric" placeholder="6:12"
+            data-svi="t" data-n="${x.n}" data-f="q400" value="${o.q400||''}"></div>
+        <div class="sv-f"><label>Luc Léger</label>
+          <input class="sv-in" type="text" inputmode="decimal" placeholder="palier 11.5"
+            data-svi="t" data-n="${x.n}" data-f="ll" value="${o.ll||''}"></div>
+      </div>
+      <div class="sv-form" style="margin-top:9px">
+        <div class="sv-f"><label>Bloc 1</label>
+          <input class="sv-in" type="text" inputmode="numeric" placeholder="4:05"
+            data-svi="t" data-n="${x.n}" data-f="b1" value="${o.b1||''}"></div>
+        <div class="sv-f"><label>Bloc 2</label>
+          <input class="sv-in" type="text" inputmode="numeric" placeholder="4:28"
+            data-svi="t" data-n="${x.n}" data-f="b2" value="${o.b2||''}"></div>
+        <div class="sv-f"><label>Δ 400 m</label>
+          <input class="sv-in" value="${prog}" readonly tabindex="-1"></div>
+      </div>
+      <div id="sv-v${x.n}">${verdict}</div>
+    </div>
+  </div>`;
+}
+/* gain sur 400 m par rapport au dernier test renseigne avant celui-ci */
+function svProg400(n){
+  const cur=svToSec((SV.t[n]||{}).q400);
+  if(cur===null) return '—';
+  for(let k=n-1;k>=1;k--){
+    const av=svToSec((SV.t[k]||{}).q400);
+    if(av!==null){
+      const d=cur-av;
+      return (d>0?'+':'')+Math.round(d)+' s';
+    }
+  }
+  return 'référence';
+}
+function prochainTest(){
+  const t=svToday();
+  const x=SV_TESTS.find(y=>svFromIso(y.d)>=t);
+  return x?x.n:null;
+}
+
+/* mise à jour ciblée : on ne reconstruit pas les champs pendant la saisie */
+function svRefreshTest(n){
+  const x=SV_TESTS.find(y=>y.n===n), o=SV.t[n]||{}, e=svEcart(o);
+  const be=document.getElementById('sv-e'+n);
+  if(be){
+    be.textContent = e===null?'—':e.toFixed(1)+' %';
+    be.className = e===null?'':(x.cible===null?'':(e<x.cible?'ok':'ko'));
+  }
+  const bv=document.getElementById('sv-v'+n);
+  if(bv){
+    if(e===null) bv.innerHTML=`<div class="sv-verdict wait">Écart non calculé — il faut les deux temps de bloc.</div>`;
+    else if(x.cible===null) bv.innerHTML=`<div class="sv-verdict">Point de référence : ${e.toFixed(1)} %. C'est à partir de lui que se lisent les trois suivants.</div>`;
+    else if(e<x.cible) bv.innerHTML=`<div class="sv-verdict">${e.toFixed(1)} % — sous la cible de ${x.cible} %.</div>`;
+    else bv.innerHTML=`<div class="sv-verdict ko">${e.toFixed(1)} % — au-dessus de la cible de ${x.cible} %. L'écart entre les deux blocs se réduit par le volume aérobie et l'aisance dans l'eau, pas par la vitesse pure.</div>`;
+  }
+}
+
+/* ============================================================
+   BLOC 5 — PRISES DE SANG
+   ============================================================ */
+function svDrawSang(){
+  $('#sv-sang').innerHTML=`
+  <div class="sv-head">
+    <div><span class="eyebrow">Bloc 05</span><h3>Prises de sang</h3></div>
+    <span class="rt">ferritine · vitamine D</span>
+  </div>
+  ${SV_SANG.map(x=>{
+    const o=SV.b[x.n]||{};
+    return `<div class="sv-card">
+      <div class="sv-form">
+        <div class="sv-f" style="min-width:126px"><label>${x.when}</label>
+          <input class="sv-in" type="date" data-svi="b" data-n="${x.n}" data-f="d" value="${o.d||x.d}"></div>
+        <div class="sv-f"><label>Ferritine µg/L</label>
+          <input class="sv-in" type="number" inputmode="decimal" step="1" placeholder="45"
+            data-svi="b" data-n="${x.n}" data-f="fer" value="${o.fer||''}"></div>
+        <div class="sv-f"><label>Vit. D ng/mL</label>
+          <input class="sv-in" type="number" inputmode="decimal" step="1" placeholder="32"
+            data-svi="b" data-n="${x.n}" data-f="vd" value="${o.vd||''}"></div>
+      </div>
+      <div id="sv-s${x.n}">${svFlagSang(x.n)}</div>
+    </div>`;
+  }).join('')}
+  <div class="sv-note">Deux valeurs seulement, mais ce sont celles qui décrochent en hiver chez un nageur qui s'entraîne le soir. Certains laboratoires rendent la vitamine D en nmol/L : divise par 2,5 pour retrouver des ng/mL. L'interprétation revient au médecin, ces seuils ne sont qu'un repère de lecture.</div>`;
+}
+
+function svFlagSang(n){
+  const o=SV.b[n]||{};
+  const f=parseFloat(o.fer), v=parseFloat(o.vd);
+  const msg=[];
+  if(!isNaN(f)) msg.push(f<SV_SEUIL.fer
+    ? `Ferritine ${f} µg/L — sous le seuil de ${SV_SEUIL.fer} souvent retenu chez le sportif d'endurance. À montrer au médecin avant de supplémenter.`
+    : `Ferritine ${f} µg/L — au-dessus de ${SV_SEUIL.fer}.`);
+  if(!isNaN(v)) msg.push(v<SV_SEUIL.vd
+    ? `Vitamine D ${v} ng/mL — sous ${SV_SEUIL.vd}. Fréquent en février après un hiver d'entraînement en intérieur.`
+    : `Vitamine D ${v} ng/mL — au-dessus de ${SV_SEUIL.vd}.`);
+  if(!msg.length) return '';
+  const bad=(!isNaN(f)&&f<SV_SEUIL.fer)||(!isNaN(v)&&v<SV_SEUIL.vd);
+  return `<div class="sv-flag${bad?'':' ok'}">${msg.join('<br>')}</div>`;
+}
+
+/* ============================================================
+   BLOC 6 — SAUVEGARDE
+   ============================================================ */
+function svDrawData(){
+  const n=Object.keys(SV.w).length;
+  $('#sv-data').innerHTML=`
+  <div class="sv-head">
+    <div><span class="eyebrow">Bloc 06</span><h3>Sauvegarde</h3></div>
+    <span class="rt">${n} pesée${n>1?'s':''} enregistrée${n>1?'s':''}</span>
+  </div>
+  <div class="sv-card">
+    <div class="sv-tools">
+      <button class="sv-btn ghost" data-sv="export">Exporter un fichier</button>
+      <button class="sv-btn ghost" data-sv="import">Réimporter</button>
+      <input type="file" id="sv-file" accept="application/json,.json" style="display:none">
+    </div>
+    <div class="sv-note">Les données vivent dans le navigateur de ce téléphone, nulle part ailleurs. Elles survivent aux mises à jour de l'app, mais pas à un effacement de l'historique Safari ni à un changement de téléphone. Exporte une fois par mois — le fichier part dans Fichiers.</div>
+  </div>`;
+}
+
+/* ============================================================
+   RENDU + ÉVÉNEMENTS
+   ============================================================ */
+function drawSuivi(){
+  svDrawPoids(); svDrawSeances(); svDrawRessenti();
+  svDrawTests(); svDrawSang(); svDrawData();
+}
+
+document.addEventListener('click', e=>{
+  const b=e.target.closest('[data-sv]');
+  if(!b) return;
+  const a=b.dataset.sv;
+
+  if(a==='mode'){ svMode=b.dataset.v; svDrawPoids(); return; }
+
+  if(a==='addw'){
+    const d=document.getElementById('sv-wd').value;
+    const v=parseFloat(String(document.getElementById('sv-wv').value).replace(',','.'));
+    if(!d||isNaN(v)||v<45||v>120) return;
+    SV.w[d]=Math.round(v*10)/10; svSave(); svDrawPoids(); return;
+  }
+  if(a==='delw'){ delete SV.w[b.dataset.k]; svSave(); svDrawPoids(); return; }
+
+  if(a==='wk'){ svWk=Math.min(0, svWk+ +b.dataset.v); svDrawSeances(); return; }
+  if(a==='tog'){
+    const k=b.dataset.k;
+    if(SV.s[k]) delete SV.s[k]; else SV.s[k]=1;
+    svSave(); svDrawSeances(); return;
+  }
+  if(a==='feel'){
+    const k=b.dataset.k, v=+b.dataset.v;
+    if(SV.f[k]===v) delete SV.f[k]; else SV.f[k]=v;
+    svSave(); svDrawRessenti(); return;
+  }
+  if(a==='export'){ svExport(); return; }
+  if(a==='import'){ document.getElementById('sv-file').click(); return; }
+});
+
+/* saisie des tests et des bilans : on enregistre sans reconstruire le champ actif */
+document.addEventListener('input', e=>{
+  const el=e.target.closest('[data-svi]');
+  if(!el) return;
+  const grp=el.dataset.svi, n=+el.dataset.n, f=el.dataset.f;
+  const box = grp==='t' ? SV.t : SV.b;
+  if(!box[n]) box[n]={};
+  box[n][f]=el.value;
+  svSave();
+  if(grp==='t') svRefreshTest(n);
+  else { const c=document.getElementById('sv-s'+n); if(c) c.innerHTML=svFlagSang(n); }
+});
+
+/* export / import */
+function svExport(){
+  const paquet={ app:'semaine', version:1, exporte:new Date().toISOString(), suivi:SV, etat:state };
+  const blob=new Blob([JSON.stringify(paquet,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download='semaine-'+svIso(svToday())+'.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+}
+document.addEventListener('change', e=>{
+  if(e.target.id!=='sv-file') return;
+  const f=e.target.files&&e.target.files[0];
+  if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const p=JSON.parse(r.result);
+      if(p.suivi) SV=Object.assign({w:{},s:{},f:{},t:{},b:{}}, p.suivi);
+      if(p.etat){ state=Object.assign({shop:{},steps:{},src:{}}, p.etat); save(); drawShop(); drawCook(); }
+      svSave(); drawSuivi();
+    }catch(err){ alert("Fichier illisible."); }
+    e.target.value='';
+  };
+  r.readAsText(f);
+});
+
+/* --- nav --- */
+const NAV=[
+ ["jour","Jour",'<path d="M3 8h18M7 3v3M17 3v3"/><rect x="3" y="5" width="18" height="16" rx="2"/>'],
+ ["recettes","Recettes",'<path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h8M8 17h4"/>'],
+ ["courses","Courses",'<path d="M5 7h14l-1.5 12h-11z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/>'],
+ ["cuisine","Cuisine",'<path d="M4 13h16"/><path d="M6 13a6 6 0 0 1 12 0"/><path d="M5 17h14"/><path d="M12 7V4"/>'],
+ ["regles","Règles",'<circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/>'],
+ ["suivi","Suivi",'<path d="M3 16.5l3.2-2.6 2.6 1.6L12.4 10l2.6 1.5L19.5 6"/><path d="M14.6 5.4h5v5"/>']
+];
+function drawNav(){
+  $('#nav').innerHTML=NAV.map((t,i)=>`<button data-tab="${t[0]}" class="${i===0?'on':''}"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">${t[2]}</svg>${t[1]}</button>`).join('');
+}
+function go(tab){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('on',p.id==='p-'+tab));
+  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab));
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* --- événements --- */
+document.addEventListener('click',e=>{
+  const day=e.target.closest('.daybtn');
+  if(day){cur=+day.dataset.i;drawDays();drawDay();return}
+  if(e.target.closest('#bk')){goBack();return}
+  const rec=e.target.closest('[data-rec]');
+  if(rec){
+    if(rec.dataset.push)pushRec(rec.dataset.rec);
+    else openRec(rec.dataset.rec);
+    return;
+  }
+  const chip=e.target.closest('.chip');
+  if(chip){filt=chip.dataset.tag;drawFilters();drawRecipes();return}
+  const sc=e.target.closest('[data-src]');
+  if(sc){const id=sc.dataset.src;const g=+id.split('-')[0],i=+id.split('-')[1];
+    const def=SHOP[g].i[i].mkt?1:0;
+    const cu=(state.src[id]!==undefined)?state.src[id]:def;
+    state.src[id]=cu?0:1;save();drawShop();return}
+  const it=e.target.closest('[data-shop]');
+  if(it){const id=it.dataset.shop;state.shop[id]=!state.shop[id];save();drawShop();return}
+  if(e.target.id==='copybtn'){copyList();return}
+  const st=e.target.closest('[data-step]');
+  if(st){const id=st.dataset.step;state.steps[id]=!state.steps[id];save();drawCook();return}
+  const tab=e.target.closest('[data-tab]');
+  if(tab){go(tab.dataset.tab);return}
+  if(e.target.id==='cl'||e.target.id==='scrim')closeRec();
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeRec()});
+
+/* --- init --- */
+(async()=>{
+  await load();
+  await svLoad();
+  drawNav();drawDays();drawDay();drawFilters();drawRecipes();drawShop();drawCook();drawRules();
+  drawSuivi();
+})();
+
+/* ============================================================
+   SERVICE WORKER — active le fonctionnement hors ligne.
+   Ne fait rien en local (file://), c'est normal : il faut HTTPS.
+   ============================================================ */
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
