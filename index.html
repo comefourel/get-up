@@ -1052,7 +1052,7 @@ function drawDay(){
       <div><h2>${d.n}</h2><span class="tag">${esc(d.title)}${phaseTag(cur)}</span></div>
       <div class="target"><b>${d.kcal.toLocaleString('fr-FR')}</b><span>KCAL CIBLE</span></div>
     </div>
-    ${avantCycle()?`<div class="warn"><b>Le cycle démarre le lundi 7 septembre.</b> ${avantCycle()} — les séances apparaîtront à partir de cette date.</div>`:''}
+    ${avantCycle()?`<div class="warn"><b>Reprise anticipée.</b> Le cycle officiel démarre le 7 septembre, ${avantCycle()}. D'ici là tu es sur la phase 0 — même contenu, volume de départ.</div>`:''}
     ${d.warn?`<div class="warn">${d.warn}</div>`:''}
     <div class="timeline"><div class="tide" id="tide"></div>${slots}</div>`;
   requestAnimationFrame(()=>{const t=$('#tide');if(t)t.style.height=Math.min(100,run/tot*100)+'%';});
@@ -2004,7 +2004,11 @@ function wFrom(s){const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)
 function phaseAt(date){
   const k=wIso(date);
   for(const p of PHASES) if(k>=p.f && k<=p.t) return p;
-  return k < PHASES[0].f ? {n:-1,nom:'Avant le cycle'} : {n:99,nom:'Après les sélections'};
+  /* avant le 7 septembre : on sert quand meme la phase 0.
+     La reprise a deja commence, il n'y a aucune raison de masquer
+     les seances en attendant une date de calendrier. */
+  if(k < PHASES[0].f) return Object.assign({}, PHASES[0], {pre:true});
+  return {n:99,nom:'Après les sélections'};
 }
 /* numéro de semaine depuis le début du cycle, 0 pour la première */
 function semaineCycle(date){
@@ -2040,8 +2044,8 @@ function seanceDuJour(i){
 function volumeAffiche(w,i){
   if(!w) return '';
   if(w.code!=='N0') return w.vol||'';
-  const s=semaineCycle(dateDuJour(i));
-  return [1200,1300,1450,1600][Math.max(0,Math.min(3,s))]+' m';
+  const sm=semaineCycle(dateDuJour(i));
+  return [1200,1300,1450,1600][Math.max(0,Math.min(3,sm))]+' m';
 }
 
 /* etiquette de phase affichee dans l'en-tete du jour */
