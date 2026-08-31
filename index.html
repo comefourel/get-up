@@ -1815,8 +1815,8 @@ function svDrawSommeil(){
   ${diag?`<div class="sv-flag${diag.ok?' ok':''}">${diag.t}</div>`:''}
 
   ${somChart()}
-  <div class="sv-legend"><span>hauteur : durée</span><span>intensité : score</span>
-    <span>contour pointillé : score non saisi</span></div>
+  <div class="sv-legend"><span>hauteur : durée</span><span>intensité et chiffre : score</span>
+    <span>pointillé : score non saisi</span></div>
 
   <div class="sv-card" style="margin-top:14px">
     <div class="sv-form">
@@ -1850,60 +1850,82 @@ function somRows(N){
   }).join('')+`</div>`;
 }
 
-/* quatorze dernières nuits, en barres */
+/* Sept dernières nuits — la même fenêtre que les moyennes affichées
+   au-dessus. À quatorze barres sur 354 px, il n'y avait de place ni
+   pour les dates ni pour les repères horaires. */
 function somChart(){
-  const W=390,H=150,L=26,R=8,T=16,B=22, iw=W-L-R, ih=H-T-B;
+  const W=390,H=196,L=30,R=10,T=18,B=34, iw=W-L-R, ih=H-T-B;
   const t=svToday();
   const jours=[];
-  for(let k=13;k>=0;k--){
+  for(let k=6;k>=0;k--){
     const d=svAdd(t,-k-1);
     const v=SV.z?SV.z[svIso(d)]:undefined;
     const o=(typeof v==='object'&&v!==null)?v:(v!==undefined?{h:+v}:null);
     jours.push({d, h:o?+o.h:null, q:(o&&o.q!==undefined)?+o.q:null});
   }
-  const max=Math.max(10, ...jours.map(x=>(x.h||0)+0.5));
-  const bw=iw/jours.length;
-  const py=v=>T+ih-(v/max)*ih;
-
+  const vide = jours.every(j=>j.h===null);
+  const MAX=10.5;
+  const bw=iw/7;
+  const py=v=>T+ih-(v/MAX)*ih;
+  const JL=['D','L','M','M','J','V','S'];
   let out='';
-  /* plage cible, en bande */
+
+  /* grille horaire, toutes les deux heures */
+  for(let v=4; v<=10; v+=2){
+    out+=`<line x1="${L}" y1="${py(v).toFixed(1)}" x2="${W-R}" y2="${py(v).toFixed(1)}"
+      stroke="var(--rule)" stroke-width="1" opacity=".5"/>
+      <text x="${L-5}" y="${(py(v)+3.2).toFixed(1)}" text-anchor="end"
+        font-family="IBM Plex Mono, monospace" font-size="9" fill="var(--mute)">${v}h</text>`;
+  }
+
+  /* plage visée */
   const yb=py(SOM_BAS), yh=py(SOM_HAUT);
   out+=`<rect x="${L}" y="${yh.toFixed(1)}" width="${iw}" height="${(yb-yh).toFixed(1)}"
-      fill="var(--sea)" opacity=".08"/>
+      fill="var(--sea)" opacity=".10"/>
     <line x1="${L}" y1="${yb.toFixed(1)}" x2="${W-R}" y2="${yb.toFixed(1)}"
-      stroke="var(--sea)" stroke-width="1" stroke-dasharray="4 4" opacity=".55"/>
-    <text x="${L-4}" y="${(yb+3.2).toFixed(1)}" text-anchor="end"
-      font-family="IBM Plex Mono, monospace" font-size="9" fill="var(--mute)">${SOM_BAS}h</text>
-    <text x="${L-4}" y="${(yh+3.2).toFixed(1)}" text-anchor="end"
-      font-family="IBM Plex Mono, monospace" font-size="9" fill="var(--mute)">${SOM_HAUT}h</text>`;
+      stroke="var(--sea)" stroke-width="1.2" stroke-dasharray="4 3" opacity=".7"/>
+    <text x="${W-R}" y="${(yh-5).toFixed(1)}" text-anchor="end"
+      font-family="IBM Plex Mono, monospace" font-size="8.5" fill="var(--sea)"
+      opacity=".8">plage visée</text>`;
 
   jours.forEach((j,i)=>{
-    const x=L+i*bw+bw*0.2, w=bw*0.6;
-    if(j.h===null){
-      out+=`<rect x="${x.toFixed(1)}" y="${(T+ih-3).toFixed(1)}" width="${w.toFixed(1)}"
-        height="3" rx="1.5" fill="var(--rule)"/>`;
-    }else{
-      const h=(j.h/max)*ih;
-      /* La hauteur dit la duree, l'intensite dit le score. Une barre
-         haute et pale, c'est une longue nuit de mauvaise qualite —
-         exactement ce qu'une seule mesure ne montrait pas. */
-      const op = (j.q!==null)
-        ? (0.22+0.78*Math.min(1,j.q/90)).toFixed(2)
-        : (0.30+0.50*Math.min(1,j.h/SOM_HAUT)).toFixed(2);
-      out+=`<rect x="${x.toFixed(1)}" y="${(T+ih-h).toFixed(1)}" width="${w.toFixed(1)}"
-        height="${h.toFixed(1)}" rx="2" fill="var(--sea)" opacity="${op}"/>`;
-      if(j.q===null)
-        out+=`<rect x="${x.toFixed(1)}" y="${(T+ih-h).toFixed(1)}" width="${w.toFixed(1)}"
-          height="${h.toFixed(1)}" rx="2" fill="none" stroke="var(--sea)"
-          stroke-width="1" stroke-dasharray="2 2" opacity=".5"/>`;
-    }
-    if(i%3===0||i===jours.length-1)
-      out+=`<text x="${(x+w/2).toFixed(1)}" y="${H-7}" text-anchor="middle"
+    const cx=L+i*bw+bw/2;
+    /* jour et date sous chaque barre, sans exception */
+    out+=`<text x="${cx.toFixed(1)}" y="${H-19}" text-anchor="middle"
+        font-family="IBM Plex Mono, monospace" font-size="9.5" fill="var(--ink)"
+        opacity=".75">${JL[j.d.getDay()]}</text>
+      <text x="${cx.toFixed(1)}" y="${H-7}" text-anchor="middle"
         font-family="IBM Plex Mono, monospace" font-size="8.5" fill="var(--mute)">${j.d.getDate()}/${j.d.getMonth()+1}</text>`;
+
+    if(j.h===null){
+      out+=`<rect x="${(cx-bw*0.28).toFixed(1)}" y="${(T+ih-4).toFixed(1)}"
+        width="${(bw*0.56).toFixed(1)}" height="4" rx="2" fill="var(--rule)"/>`;
+      return;
+    }
+    const h=(j.h/MAX)*ih, y=T+ih-h, x=cx-bw*0.28, w=bw*0.56;
+    const op = (j.q!==null) ? (0.28+0.72*Math.min(1,j.q/90)).toFixed(2) : '0.55';
+    out+=`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}"
+      height="${h.toFixed(1)}" rx="2.5" fill="var(--sea)" opacity="${op}"/>`;
+    if(j.q===null)
+      out+=`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}"
+        height="${h.toFixed(1)}" rx="2.5" fill="none" stroke="var(--sea)"
+        stroke-width="1" stroke-dasharray="2 2" opacity=".45"/>`;
+    /* le score, en clair au-dessus de sa barre */
+    out+=`<text x="${cx.toFixed(1)}" y="${(y-5).toFixed(1)}" text-anchor="middle"
+      font-family="IBM Plex Mono, monospace" font-size="9.5"
+      fill="${j.q!==null?'var(--ink)':'var(--rule)'}">${j.q!==null?j.q:'·'}</text>`;
   });
-  out+=`<line x1="${L}" y1="${T+ih}" x2="${W-R}" y2="${T+ih}" stroke="var(--rule)" stroke-width="1"/>`;
+
+  out+=`<line x1="${L}" y1="${T+ih}" x2="${W-R}" y2="${T+ih}" stroke="var(--ink)"
+    stroke-width="1" opacity=".55"/>`;
+
+  if(vide)
+    out+=`<text x="${L+iw/2}" y="${T+ih/2}" text-anchor="middle"
+      font-family="Karla, sans-serif" font-size="11" fill="var(--mute)"
+      font-style="italic">Le graphe apparaît dès la première nuit notée</text>`;
+
   return `<svg class="sv-chart" viewBox="0 0 ${W} ${H}" role="img"
-    aria-label="Durée de sommeil des quatorze dernières nuits">${out}</svg>`;
+    aria-label="Durée et score de sommeil des sept dernières nuits">${out}</svg>`;
 }
 
 /* ============================================================
