@@ -370,6 +370,32 @@ button.ing:focus-visible{outline:2px solid var(--signal);outline-offset:1px}
 /* ============================================================
    SUIVI  — tout est préfixé .sv- pour ne rien toucher au reste
    ============================================================ */
+/* sous-menu du suivi : quatre sections plutot qu'une colonne
+   de sept blocs deroules en permanence */
+.subnav{
+  display:flex;gap:2px;margin-bottom:26px;
+  border-bottom:1px solid var(--rule);
+  position:sticky;top:env(safe-area-inset-top,0px);z-index:20;
+  background:var(--fog);
+}
+.subnav button{
+  flex:1;min-width:0;background:none;border:0;cursor:pointer;padding:13px 2px 11px;
+  font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.05em;
+  text-transform:uppercase;color:var(--mute);
+  border-bottom:2px solid transparent;margin-bottom:-1px;min-height:44px;
+  transition:color .15s,border-color .15s;
+}
+.subnav button:hover{color:var(--sea)}
+.subnav button.on{color:var(--ink);border-bottom-color:var(--ink);font-weight:500}
+.subnav button:focus-visible{outline:2px solid var(--signal);outline-offset:-2px}
+.subnav button span.lb{display:block}
+@media (max-width:400px){ .subnav button{font-size:9px;letter-spacing:.02em} }
+.subnav .pip{display:inline-block;width:5px;height:5px;border-radius:50%;
+  background:var(--signal);margin-left:5px;vertical-align:middle;position:relative;top:-1px}
+
+.svsec{display:none}
+.svsec.on{display:block}
+
 .sv-block{margin-bottom:30px}
 .sv-head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;
   border-bottom:1px solid var(--rule);padding-bottom:9px;margin-bottom:14px}
@@ -396,7 +422,7 @@ button.ing:focus-visible{outline:2px solid var(--signal);outline-offset:1px}
 .sv-num.hot b{color:var(--signal)}
 
 /* --- graphiques --- */
-.sv-chart{width:100%;max-width:440px;margin:0 auto;display:block;background:var(--paper);
+.sv-chart{width:100%;display:block;background:var(--paper);
   border:1px solid var(--rule);border-radius:4px;box-shadow:var(--shadow)}
 .sv-legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:9px;
   font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--mute);letter-spacing:.04em}
@@ -534,6 +560,23 @@ button.ing:focus-visible{outline:2px solid var(--signal);outline-offset:1px}
   margin-left:6px;vertical-align:middle;top:0}
 .sv-note{font-size:13.5px;color:var(--mute);line-height:1.5;margin-top:10px}
 
+/* conseil du soir : la seule information de ce bloc sur laquelle
+   on peut agir ce soir meme */
+.sv-conseil{border:1.5px solid var(--ink);border-radius:4px;background:var(--paper);
+  padding:12px 15px 11px;margin-bottom:14px;box-shadow:var(--shadow)}
+.sv-conseil .c-top{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.sv-conseil .eyebrow{flex:none}
+.sv-conseil .c-top>b{font-family:'Space Grotesk',sans-serif;font-size:26px;
+  font-weight:700;line-height:1;letter-spacing:-.01em}
+.sv-conseil .c-bed{margin-left:auto;font-family:'IBM Plex Mono',monospace;
+  font-size:12px;color:var(--mute);white-space:nowrap}
+.sv-conseil .c-bed b{color:var(--ink);font-weight:600;font-size:14px}
+.sv-conseil .c-why{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+.sv-conseil .c-why span{font-family:'IBM Plex Mono',monospace;font-size:10.5px;
+  background:var(--sea-soft);color:var(--sea);padding:4px 9px;border-radius:20px}
+.sv-conseil .c-note{margin-top:9px;font-size:11.5px;color:var(--rule);
+  font-family:'IBM Plex Mono',monospace;letter-spacing:.03em}
+
 /* fiche de seance : la valeur peut etre longue, elle passe a la ligne
    au lieu d'ecraser son libelle */
 .wbody{position:relative}
@@ -637,15 +680,27 @@ button.ing:focus-visible{outline:2px solid var(--signal);outline-offset:1px}
   <div class="wrap">
     <div class="shead">
       <h2>Suivi</h2>
-      <p>Ce qui se mesure sur huit mois. Les chiffres isolés ne disent rien — c'est la pente qui compte.</p>
+      <p>Les chiffres isolés ne disent rien. C'est la pente qui compte.</p>
     </div>
-    <div id="sv-poids" class="sv-block"></div>
-    <div id="sv-seances" class="sv-block"></div>
-    <div id="sv-arbitrage" class="sv-block"></div>
-    <div id="sv-ressenti" class="sv-block"></div>
-    <div id="sv-tests" class="sv-block"></div>
-    <div id="sv-sang" class="sv-block"></div>
-    <div id="sv-data" class="sv-block"></div>
+    <nav class="subnav" id="svnav" aria-label="Sections du suivi"></nav>
+
+    <div class="svsec" data-sec="poids">
+      <div id="sv-poids" class="sv-block"></div>
+      <div id="sv-data" class="sv-block"></div>
+    </div>
+    <div class="svsec" data-sec="semaine">
+      <div id="sv-seances" class="sv-block"></div>
+      <div id="sv-ressenti" class="sv-block"></div>
+      <div id="sv-arbitrage" class="sv-block"></div>
+    </div>
+    <div class="svsec" data-sec="sommeil">
+      <div id="sv-sommeil" class="sv-block"></div>
+    </div>
+    <div class="svsec" data-sec="tests">
+      <div id="sv-tests" class="sv-block"></div>
+      <div id="sv-sang" class="sv-block"></div>
+    </div>
+
   </div>
 </section>
 
@@ -1279,14 +1334,14 @@ const SV_DUR   = [0,0,0,0,1,0,1];              // vendredi et dimanche
 const SV_LAB   = ['LUN','MAR','MER','JEU','VEN','SAM','DIM'];
 
 /* ---------- état ---------- */
-let SV = { w:{}, s:{}, f:{}, t:{}, b:{} };
+let SV = { w:{}, s:{}, f:{}, t:{}, b:{}, z:{} };
 let svMode = 'cycle';   // 'cycle' | 'recent'
 let svWk   = 0;         // décalage de semaine, 0 = semaine en cours
 
 async function svLoad(){
   try{
     const r = await window.storage.get('semaine-suivi');
-    if(r && r.value) SV = Object.assign({w:{},s:{},f:{},t:{},b:{}}, JSON.parse(r.value));
+    if(r && r.value) SV = Object.assign({w:{},s:{},f:{},t:{},b:{},z:{}}, JSON.parse(r.value));
   }catch(e){}
 }
 async function svSave(){
@@ -1362,7 +1417,7 @@ function svDrawPoids(){
 
   $('#sv-poids').innerHTML = `
   <div class="sv-head">
-    <div><span class="eyebrow">Bloc 01</span><h3>Pesée au réveil</h3></div>
+    <div><h3>Pesée au réveil</h3></div>
     <span class="rt">${nSem} / ${SV_PESEES_SEM} cette semaine<br>${semRest} sem. avant avril</span>
   </div>
 
@@ -1535,7 +1590,7 @@ function svDrawSeances(){
 
   $('#sv-seances').innerHTML=`
   <div class="sv-head">
-    <div><span class="eyebrow">Bloc 02</span><h3>Séances réalisées</h3></div>
+    <div><h3>Séances réalisées</h3></div>
     <span class="rt">moyenne 8 sem.<br><b style="color:var(--ink)">${moy} / ${prevu}</b></span>
   </div>
 
@@ -1577,6 +1632,226 @@ function svChartSeances(barres,prevu){
 const SV_NIV=[ [1,'Frais'], [2,'Lourd'], [3,'Cassé'] ];
 
 /* ============================================================
+   SOMMEIL
+   ------------------------------------------------------------
+   Une seule valeur par matin : la durée. Ni heure de coucher,
+   ni qualité — c'est la moyenne hebdomadaire qui porte le
+   signal, et une saisie qui prend trois secondes est une
+   saisie qu'on tient huit mois.
+   ============================================================ */
+
+/* Plage plutot qu'un trait : le besoin individuel varie, et il est
+   plus eleve chez un sportif de 21 ans qui s'entraine six fois par
+   semaine. Atteindre le bas de la plage est bien, le milieu mieux. */
+const SOM_BAS  = 8;
+const SOM_HAUT = 9;
+const SOM_TAPER = 9;      // plancher dans les dix jours avant les selections
+const SOM_J = 10;
+
+function somCible(d){
+  const j=(SV_DF-d)/864e5;
+  return (j>=0 && j<=SOM_J) ? SOM_TAPER : SOM_BAS;
+}
+
+/* ------------------------------------------------------------
+   CONSEIL DU SOIR
+   Trois facteurs seulement, tous issus de ce que l'app connait :
+   la charge de demain, les trois dernieres nuits, le dernier
+   ressenti J+1. Pas de variabilite cardiaque, donc pas de
+   pretention a mesurer la recuperation — c'est une regle, pas
+   un capteur, et l'app le dit.
+   ------------------------------------------------------------ */
+const SOM_COUT = { 'Mer, Saint-Malo':0.5, 'Natation piscine':0.25,
+                   'Course à pied':0.25, 'Musculation':0.25 };
+
+function somConseil(){
+  const t=svToday();
+  const dem=svAdd(t,1);
+  let h=SOM_BAS+0.25, R=[];
+
+  /* seance de demain */
+  const i=(dem.getDay()===0?6:dem.getDay()-1);
+  const w=seanceDuJour(i);
+  if(w){
+    const c=SOM_COUT[w.type]||0.25;
+    h+=c;
+    R.push('demain '+w.code+', '+w.type.toLowerCase());
+  }
+  /* trois dernieres nuits courtes */
+  const N=somNuits().slice(-3);
+  if(N.length===3){
+    const m=N.reduce((s,x)=>s+x.h,0)/3;
+    if(m < SOM_BAS-0.5){ h+=0.5; R.push('trois nuits courtes de suite'); }
+    else if(m >= SOM_HAUT){ h-=0.25; R.push('nuits récentes déjà longues'); }
+  }
+  /* dernier ressenti J+1 */
+  const F=Object.keys(SV.f||{}).sort();
+  if(F.length && SV.f[F[F.length-1]]===3){ h+=0.5; R.push('dernier J+1 noté « cassé »'); }
+
+  /* extension avant les selections */
+  const j=(SV_DF-t)/864e5;
+  if(j>=0 && j<=SOM_J){ h=Math.max(h,SOM_TAPER); R=['extension d\'avant sélections']; }
+
+  h=Math.max(SOM_BAS, Math.min(9.75, Math.round(h*4)/4));
+  return {h, raisons:R};
+}
+
+/* heure de coucher : premier creneau de demain, moins trente minutes */
+function somLever(){
+  const dem=svAdd(svToday(),1);
+  const i=(dem.getDay()===0?6:dem.getDay()-1);
+  const p=DAYS[i].slots[0].h.replace('h',':');
+  const [H,M]=p.split(':').map(Number);
+  return H+(M||0)/60-0.5;
+}
+function somCoucher(){
+  let c=somLever()-somConseil().h;
+  if(c<0) c+=24;
+  const H=Math.floor(c), M=Math.round((c-H)*60);
+  return String(H).padStart(2,'0')+'h'+String(M).padStart(2,'0');
+}
+function somNuits(){
+  return Object.keys(SV.z||{}).sort().map(k=>({iso:k, d:svFromIso(k), h:+SV.z[k]}));
+}
+/* moyenne des sept dernières nuits renseignées */
+function somMoy(n){
+  const L=somNuits().slice(-n);
+  return L.length ? L.reduce((s,x)=>s+x.h,0)/L.length : null;
+}
+function somFmt(h){
+  if(h===null||isNaN(h)) return '—';
+  const H=Math.floor(h), M=Math.round((h-H)*60);
+  return M ? H+' h '+String(M).padStart(2,'0') : H+' h';
+}
+
+function svDrawSommeil(){
+  const t=svToday();
+  const N=somNuits();
+  const moy7=somMoy(7), moy28=somMoy(28);
+  const cible=somCible(t);
+  const hier=svAdd(t,-1);
+  const derniere=N.length?N[N.length-1]:null;
+
+  /* nuits dans la cible sur les sept dernières : ça monte comme
+     ça descend, et ça se corrige dès demain — contrairement à une
+     dette, qui ne peut que grossir et ne se rembourse pas. */
+  const L7=N.slice(-7);
+  const cons=somConseil();
+
+  let etat='', cls='';
+  if(moy7!==null){
+    if(moy7>=SOM_HAUT){ etat='dans le haut de la plage'; cls='alt'; }
+    else if(moy7>=SOM_BAS){ etat='dans la plage'; cls='alt'; }
+    else if(moy7>=SOM_BAS-0.75){ etat='juste en dessous'; cls=''; }
+    else { etat='sous la plage'; cls=''; }
+  }
+
+  $('#sv-sommeil').innerHTML=`
+  <div class="sv-head">
+    <div><h3>Sommeil</h3></div>
+    <span class="rt">plage ${SOM_BAS}–${SOM_HAUT} h<br>${N.length} nuit${N.length>1?'s':''} notée${N.length>1?'s':''}</span>
+  </div>
+
+  <div class="sv-conseil">
+    <div class="c-top">
+      <span class="eyebrow">Ce soir</span>
+      <b>${somFmt(cons.h)}</b>
+      <span class="c-bed">coucher vers <b>${somCoucher()}</b></span>
+    </div>
+    ${cons.raisons.length
+      ? `<div class="c-why">${cons.raisons.map(r=>`<span>${esc(r)}</span>`).join('')}</div>`
+      : ''}
+    <div class="c-note">Règle calculée, pas une mesure.</div>
+  </div>
+
+  <div class="sv-nums">
+    <div class="sv-num ${cls}"><span class="eyebrow">Moyenne 7 nuits</span>
+      <b>${somFmt(moy7)}</b><small>${etat||'aucune saisie'}</small></div>
+    <div class="sv-num"><span class="eyebrow">Dernière nuit</span>
+      <b>${derniere?somFmt(derniere.h):'—'}</b>
+      <small>${derniere?svCourt(derniere.d):'—'}</small></div>
+  </div>
+
+  ${somChart()}
+
+  <div class="sv-card" style="margin-top:14px">
+    <div class="sv-form">
+      <div class="sv-f" style="min-width:132px"><label>Nuit du</label>
+        <input class="sv-in" type="date" id="sv-zd" value="${svIso(hier)}" max="${svIso(t)}"></div>
+      <div class="sv-f"><label>Durée (h)</label>
+        <input class="sv-in" type="number" id="sv-zv" step="0.25" min="2" max="14"
+               inputmode="decimal" placeholder="7,5"></div>
+      <button class="sv-btn" data-sv="addz">Enregistrer</button>
+    </div>
+    ${somRows(N)}
+  </div>
+
+  <div class="sv-note">Note la nuit au réveil, en même temps que la pesée. Une nuit courte isolée n'a aucune importance. Et le sommeil ne se rattrape pas vraiment : deux grasses matinées restaurent la vigilance, mais pas la régulation de l'appétit ni la sensibilité à l'insuline. Ce qui compte n'est donc pas de rembourser, c'est de ne pas enchaîner.</div>`;
+}
+
+function somRows(N){
+  if(!N.length) return `<div class="sv-empty">Aucune nuit notée. La première sert de repère, même approximative.</div>`;
+  const L=N.slice(-6).reverse();
+  return `<div class="sv-rows">`+L.map(e=>{
+    const c=SOM_BAS, d=e.h-c;
+    return `<div class="sv-row">
+      <span class="d">${svCourt(e.d)}</span>
+      <span class="v">${somFmt(e.h)}</span>
+      <span class="delta">${d>=0?'+':'−'}${somFmt(Math.abs(d))}</span>
+      <button class="sv-del" data-sv="delz" data-k="${e.iso}" aria-label="Supprimer">×</button>
+    </div>`;
+  }).join('')+`</div>`;
+}
+
+/* quatorze dernières nuits, en barres */
+function somChart(){
+  const W=390,H=150,L=26,R=8,T=16,B=22, iw=W-L-R, ih=H-T-B;
+  const t=svToday();
+  const jours=[];
+  for(let k=13;k>=0;k--){
+    const d=svAdd(t,-k-1);
+    jours.push({d, h:SV.z&&SV.z[svIso(d)]!==undefined?+SV.z[svIso(d)]:null});
+  }
+  const max=Math.max(10, ...jours.map(x=>(x.h||0)+0.5));
+  const bw=iw/jours.length;
+  const py=v=>T+ih-(v/max)*ih;
+
+  let out='';
+  /* plage cible, en bande */
+  const yb=py(SOM_BAS), yh=py(SOM_HAUT);
+  out+=`<rect x="${L}" y="${yh.toFixed(1)}" width="${iw}" height="${(yb-yh).toFixed(1)}"
+      fill="var(--sea)" opacity=".08"/>
+    <line x1="${L}" y1="${yb.toFixed(1)}" x2="${W-R}" y2="${yb.toFixed(1)}"
+      stroke="var(--sea)" stroke-width="1" stroke-dasharray="4 4" opacity=".55"/>
+    <text x="${L-4}" y="${(yb+3.2).toFixed(1)}" text-anchor="end"
+      font-family="IBM Plex Mono, monospace" font-size="9" fill="var(--mute)">${SOM_BAS}h</text>
+    <text x="${L-4}" y="${(yh+3.2).toFixed(1)}" text-anchor="end"
+      font-family="IBM Plex Mono, monospace" font-size="9" fill="var(--mute)">${SOM_HAUT}h</text>`;
+
+  jours.forEach((j,i)=>{
+    const x=L+i*bw+bw*0.2, w=bw*0.6;
+    if(j.h===null){
+      out+=`<rect x="${x.toFixed(1)}" y="${(T+ih-3).toFixed(1)}" width="${w.toFixed(1)}"
+        height="3" rx="1.5" fill="var(--rule)"/>`;
+    }else{
+      const h=(j.h/max)*ih;
+      /* degrade d'opacite plutot qu'un code rouge/vert : dix nuits
+         orange sur quatorze donnaient l'impression d'un desastre
+         pour une moyenne de 7 h 21, qui est courte sans etre grave */
+      const op=(0.32+0.68*Math.min(1,j.h/SOM_HAUT)).toFixed(2);
+      out+=`<rect x="${x.toFixed(1)}" y="${(T+ih-h).toFixed(1)}" width="${w.toFixed(1)}"
+        height="${h.toFixed(1)}" rx="2" fill="var(--sea)" opacity="${op}"/>`;
+    }
+    if(i%3===0||i===jours.length-1)
+      out+=`<text x="${(x+w/2).toFixed(1)}" y="${H-7}" text-anchor="middle"
+        font-family="IBM Plex Mono, monospace" font-size="8.5" fill="var(--mute)">${j.d.getDate()}/${j.d.getMonth()+1}</text>`;
+  });
+  out+=`<line x1="${L}" y1="${T+ih}" x2="${W-R}" y2="${T+ih}" stroke="var(--rule)" stroke-width="1"/>`;
+  return `<svg class="sv-chart" viewBox="0 0 ${W} ${H}" role="img"
+    aria-label="Durée de sommeil des quatorze dernières nuits">${out}</svg>`;
+}
+
+/* ============================================================
    BLOC 2 bis — ARBITRAGE
    L'ancien onglet Regles etait un doublon : trois de ses cinq
    regles s'affichent deja dans la vue Jour, au bon moment.
@@ -1586,7 +1861,7 @@ const SV_NIV=[ [1,'Frais'], [2,'Lourd'], [3,'Cassé'] ];
 function svDrawArbitrage(){
   $('#sv-arbitrage').innerHTML=`
   <div class="sv-head">
-    <div><span class="eyebrow">Bloc 02 bis</span><h3>Semaine chargée</h3></div>
+    <div><h3>Semaine chargée</h3></div>
     <span class="rt">l'eau ne saute<br>jamais en dernier</span>
   </div>
   <div class="sv-card" style="padding-top:6px">
@@ -1623,7 +1898,7 @@ function svDrawRessenti(){
 
   $('#sv-ressenti').innerHTML=`
   <div class="sv-head">
-    <div><span class="eyebrow">Bloc 03</span><h3>Ressenti J+1</h3></div>
+    <div><h3>Ressenti J+1</h3></div>
     <span class="rt">vendredi et dimanche<br>les deux séances dures</span>
   </div>
   <div class="sv-card" style="padding-top:6px">
@@ -1648,7 +1923,7 @@ function svDrawTests(){
 
   $('#sv-tests').innerHTML=`
   <div class="sv-head">
-    <div><span class="eyebrow">Bloc 04</span><h3>Tests chronométrés</h3></div>
+    <div><h3>Tests chronométrés</h3></div>
     <span class="rt">${prochain?'prochain : '+prochain.when:'cycle terminé'}</span>
   </div>
   ${SV_TESTS.map(x=>svCardTest(x,t)).join('')}
@@ -1744,7 +2019,7 @@ function svRefreshTest(n){
 function svDrawSang(){
   $('#sv-sang').innerHTML=`
   <div class="sv-head">
-    <div><span class="eyebrow">Bloc 05</span><h3>Prises de sang</h3></div>
+    <div><h3>Prises de sang</h3></div>
     <span class="rt">ferritine · vitamine D</span>
   </div>
   ${SV_SANG.map(x=>{
@@ -1785,12 +2060,18 @@ function svFlagSang(n){
    BLOC 6 — SAUVEGARDE
    ============================================================ */
 function svDrawData(){
-  const n=Object.keys(SV.w).length;
+  const n=Object.keys(SV.w).length+Object.keys(SV.z||{}).length;
+  /* jours depuis le dernier export : au-dela d'un mois, on le dit */
+  const j = SV.x ? Math.floor((svToday()-svFromIso(SV.x))/864e5) : null;
+  const vieux = (j===null && n>0) || (j!==null && j>=30);
   $('#sv-data').innerHTML=`
   <div class="sv-head">
-    <div><span class="eyebrow">Bloc 06</span><h3>Sauvegarde</h3></div>
-    <span class="rt">${n} pesée${n>1?'s':''} enregistrée${n>1?'s':''}</span>
+    <div><h3>Sauvegarde</h3></div>
+    <span class="rt">${j===null?(n?'jamais exportée':'aucune donnée'):'exportée il y a '+j+' j'}</span>
   </div>
+  ${vieux?`<div class="sv-flag" style="margin-bottom:12px">${j===null
+    ? 'Tes données ne sont sauvegardées nulle part. Un changement de téléphone effacerait la courbe.'
+    : 'Dernier export il y a '+j+' jours. Une fois par mois suffit.'}</div>`:''}
   <div class="sv-card">
     <div class="sv-tools">
       <button class="sv-btn ghost" data-sv="export">Exporter un fichier</button>
@@ -1805,9 +2086,62 @@ function svDrawData(){
 /* ============================================================
    RENDU + ÉVÉNEMENTS
    ============================================================ */
+const SV_SECS=[
+  ['poids',  'Poids'],
+  ['sommeil','Sommeil'],
+  ['semaine','Entraînement'],
+  ['tests',  'Tests']
+];
+let svSec='poids';
+
+/* pastille sur l'onglet quand quelque chose attend une saisie */
+function svAFaire(sec){
+  const t=svToday();
+  if(sec==='poids'){
+    const l0=svLundi(t);
+    const n=Object.keys(SV.w).filter(k=>svFromIso(k)>=l0).length;
+    if(n<SV_PESEES_SEM) return true;
+    /* sauvegarde jamais faite ou trop ancienne */
+    if(Object.keys(SV.w).length){
+      if(!SV.x) return true;
+      if((t-svFromIso(SV.x))/864e5 >= 30) return true;
+    }
+    return false;
+  }
+  if(sec==='sommeil'){
+    /* la nuit d'hier n'est pas notee */
+    return !(SV.z && SV.z[svIso(svAdd(t,-1))]!==undefined);
+  }
+  if(sec==='semaine'){
+    /* un J+1 de seance dure passe sans ressenti note */
+    for(let k=1;k<=3;k++){
+      const d=svAdd(t,-k), j=d.getDay();
+      if((j===6||j===1) && SV.f[svIso(d)]===undefined) return true;
+    }
+    return false;
+  }
+  if(sec==='tests'){
+    /* un test dont la date approche et qui n'est pas rempli */
+    return SV_TESTS.some(x=>{
+      const d=svFromIso(x.d), j=(d-t)/864e5;
+      return j<=14 && j>=-30 && svEcart(SV.t[x.n]||{})===null;
+    });
+  }
+  return false;
+}
+
+function svDrawNav(){
+  $('#svnav').innerHTML=SV_SECS.map(([k,n])=>
+    `<button class="${k===svSec?'on':''}" data-sv="sec" data-v="${k}"
+      aria-current="${k===svSec?'page':'false'}">${n}${svAFaire(k)?'<span class="pip"></span>':''}</button>`
+  ).join('');
+  document.querySelectorAll('.svsec').forEach(el=>
+    el.classList.toggle('on', el.dataset.sec===svSec));
+}
+
 function drawSuivi(){
-  svDrawPoids(); svDrawSeances(); svDrawArbitrage(); svDrawRessenti();
-  svDrawTests(); svDrawSang(); svDrawData();
+  svDrawPoids(); svDrawSeances(); svDrawSommeil(); svDrawArbitrage(); svDrawRessenti();
+  svDrawTests(); svDrawSang(); svDrawData(); svDrawNav();
 }
 
 document.addEventListener('click', e=>{
@@ -1815,16 +2149,25 @@ document.addEventListener('click', e=>{
   if(!b) return;
   const a=b.dataset.sv;
 
+  if(a==='sec'){ svSec=b.dataset.v; svDrawNav(); window.scrollTo(0,0); return; }
   if(a==='mode'){ svMode=b.dataset.v; svDrawPoids(); return; }
 
   if(a==='addw'){
     const d=document.getElementById('sv-wd').value;
     const v=parseFloat(String(document.getElementById('sv-wv').value).replace(',','.'));
     if(!d||isNaN(v)||v<45||v>120) return;
-    SV.w[d]=Math.round(v*10)/10; svSave(); svDrawPoids(); drawMast();
+    SV.w[d]=Math.round(v*10)/10; svSave(); svDrawPoids(); svDrawNav(); drawMast();
     toast(String(Math.round(v*10)/10).replace('.',',')+' kg enregistré'); return;
   }
-  if(a==='delw'){ delete SV.w[b.dataset.k]; svSave(); svDrawPoids(); drawMast(); toast('Pesée supprimée'); return; }
+  if(a==='addz'){
+    const d=document.getElementById('sv-zd').value;
+    const v=parseFloat(String(document.getElementById('sv-zv').value).replace(',','.'));
+    if(!d||isNaN(v)||v<2||v>14) return;
+    SV.z[d]=Math.round(v*4)/4; svSave(); svDrawSommeil(); svDrawNav();
+    toast(somFmt(SV.z[d])+' de sommeil enregistré'); return;
+  }
+  if(a==='delz'){ delete SV.z[b.dataset.k]; svSave(); svDrawSommeil(); toast('Nuit supprimée'); return; }
+  if(a==='delw'){ delete SV.w[b.dataset.k]; svSave(); svDrawPoids(); svDrawNav(); drawMast(); toast('Pesée supprimée'); return; }
 
   if(a==='wk'){ svWk=Math.min(0, svWk+ +b.dataset.v); svDrawSeances(); return; }
   if(a==='tog'){
@@ -1864,6 +2207,8 @@ document.addEventListener('input', e=>{
 
 /* export / import */
 function svExport(){
+  SV.x=svIso(svToday());            /* date du dernier export */
+  svSave();
   const paquet={ app:'semaine', version:1, exporte:new Date().toISOString(), suivi:SV, etat:state };
   const blob=new Blob([JSON.stringify(paquet,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);
@@ -1871,6 +2216,7 @@ function svExport(){
   a.href=url; a.download='semaine-'+svIso(svToday())+'.json';
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),1500);
+  svDrawData(); toast('Sauvegarde exportée');
 }
 document.addEventListener('change', e=>{
   if(e.target.id!=='sv-file') return;
@@ -1880,7 +2226,7 @@ document.addEventListener('change', e=>{
   r.onload=()=>{
     try{
       const p=JSON.parse(r.result);
-      if(p.suivi) SV=Object.assign({w:{},s:{},f:{},t:{},b:{}}, p.suivi);
+      if(p.suivi) SV=Object.assign({w:{},s:{},f:{},t:{},b:{},z:{}}, p.suivi);
       if(p.etat){ state=Object.assign({shop:{},steps:{},src:{}}, p.etat); save(); drawShop(); drawCook(); }
       svSave(); drawSuivi(); drawMast();
     }catch(err){ alert("Fichier illisible."); }
