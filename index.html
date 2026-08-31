@@ -1334,7 +1334,7 @@ const SV_DUR   = [0,0,0,0,1,0,1];              // vendredi et dimanche
 const SV_LAB   = ['LUN','MAR','MER','JEU','VEN','SAM','DIM'];
 
 /* ---------- état ---------- */
-let SV = { w:{}, s:{}, f:{}, t:{}, b:{}, z:{} };
+let SV = { w:{}, s:{}, f:{}, t:{}, b:{}, z:{}, n:0 };
 let svMode = 'cycle';   // 'cycle' | 'recent'
 let svWk   = 0;         // décalage de semaine, 0 = semaine en cours
 
@@ -1684,6 +1684,13 @@ function somConseil(){
     if(m < SOM_BAS-0.5){ h+=0.5; R.push('trois nuits courtes de suite'); }
     else if(m >= SOM_HAUT){ h-=0.25; R.push('nuits récentes déjà longues'); }
   }
+  /* score de la derniere nuit : une nuit longue mais fragmentee
+     merite du repos autant qu'une nuit courte */
+  const der=somNuits().slice(-1)[0];
+  if(der && der.q!==null){
+    if(der.q<60){ h+=0.5; R.push('score de '+der.q+' hier'); }
+    else if(der.q>=85 && h>SOM_BAS){ h-=0.25; R.push('nuit de qualité hier'); }
+  }
   /* dernier ressenti J+1 */
   const F=Object.keys(SV.f||{}).sort();
   if(F.length && SV.f[F[F.length-1]]===3){ h+=0.5; R.push('dernier J+1 noté « cassé »'); }
@@ -1710,8 +1717,26 @@ function somCoucher(){
   const H=Math.floor(c), M=Math.round((c-H)*60);
   return String(H).padStart(2,'0')+'h'+String(M).padStart(2,'0');
 }
+/* Une nuit stocke desormais {h, q} : duree et score Garmin.
+   Les anciennes saisies etaient un nombre simple, on les relit. */
 function somNuits(){
-  return Object.keys(SV.z||{}).sort().map(k=>({iso:k, d:svFromIso(k), h:+SV.z[k]}));
+  return Object.keys(SV.z||{}).sort().map(k=>{
+    const v=SV.z[k];
+    const o=(typeof v==='object'&&v!==null)?v:{h:+v};
+    return {iso:k, d:svFromIso(k), h:+o.h, q:(o.q!==undefined&&o.q!=='')?+o.q:null};
+  });
+}
+/* bandes Garmin : 90+ excellent, 80+ bon, 60+ correct, en dessous mauvais */
+function somQualLbl(q){
+  if(q===null||isNaN(q)) return '—';
+  if(q>=90) return 'excellent';
+  if(q>=80) return 'bon';
+  if(q>=60) return 'correct';
+  return 'mauvais';
+}
+function somMoyQ(n){
+  const L=somNuits().filter(x=>x.q!==null).slice(-n);
+  return L.length ? L.reduce((s,x)=>s+x.q,0)/L.length : null;
 }
 /* moyenne des sept dernières nuits renseignées */
 function somMoy(n){
@@ -1737,6 +1762,17 @@ function svDrawSommeil(){
      dette, qui ne peut que grossir et ne se rembourse pas. */
   const L7=N.slice(-7);
   const cons=somConseil();
+  const moyQ=somMoyQ(7);
+
+  /* Le croisement des deux mesures : c'est lui qui oriente, pas
+     les moyennes prises separement. */
+  let diag=null;
+  if(moy7!==null && moyQ!==null){
+    const dLong = moy7>=SOM_BAS, qBon = moyQ>=75;
+    if(dLong && !qBon) diag={ok:false, t:"Tu dors assez longtemps mais mal. La durée n'est pas le levier — regarde plutôt l'heure de fin de séance, la température de la chambre, les écrans, ou un début de fatigue virale."};
+    else if(!dLong && qBon) diag={ok:true, t:"Nuits courtes mais de bonne qualité. Le sommeil que tu prends est efficace : c'est du temps qu'il manque, pas de la récupération."};
+    else if(!dLong && !qBon) diag={ok:false, t:"Court et fragmenté. Commence par allonger — la durée est le levier le plus simple, et la qualité suit souvent."};
+  }
 
   let etat='', cls='';
   if(moy7!==null){
@@ -1765,14 +1801,22 @@ function svDrawSommeil(){
   </div>
 
   <div class="sv-nums">
-    <div class="sv-num ${cls}"><span class="eyebrow">Moyenne 7 nuits</span>
+    <div class="sv-num ${cls}"><span class="eyebrow">Durée · 7 nuits</span>
       <b>${somFmt(moy7)}</b><small>${etat||'aucune saisie'}</small></div>
+    <div class="sv-num ${moyQ!==null&&moyQ>=80?'alt':''}"><span class="eyebrow">Score · 7 nuits</span>
+      <b>${moyQ!==null?Math.round(moyQ):'—'}</b>
+      <small>${moyQ!==null?somQualLbl(moyQ):'non renseigné'}</small></div>
     <div class="sv-num"><span class="eyebrow">Dernière nuit</span>
       <b>${derniere?somFmt(derniere.h):'—'}</b>
-      <small>${derniere?svCourt(derniere.d):'—'}</small></div>
+      <small>${derniere
+        ? svCourt(derniere.d)+(derniere.q!==null?' · '+derniere.q:'')
+        : 'aucune saisie'}</small></div>
   </div>
+  ${diag?`<div class="sv-flag${diag.ok?' ok':''}">${diag.t}</div>`:''}
 
   ${somChart()}
+  <div class="sv-legend"><span>hauteur : durée</span><span>intensité : score</span>
+    <span>contour pointillé : score non saisi</span></div>
 
   <div class="sv-card" style="margin-top:14px">
     <div class="sv-form">
@@ -1781,12 +1825,15 @@ function svDrawSommeil(){
       <div class="sv-f"><label>Durée (h)</label>
         <input class="sv-in" type="number" id="sv-zv" step="0.25" min="2" max="14"
                inputmode="decimal" placeholder="7,5"></div>
+      <div class="sv-f"><label>Score Garmin</label>
+        <input class="sv-in" type="number" id="sv-zq" step="1" min="0" max="100"
+               inputmode="numeric" placeholder="82"></div>
       <button class="sv-btn" data-sv="addz">Enregistrer</button>
     </div>
     ${somRows(N)}
   </div>
 
-  <div class="sv-note">Note la nuit au réveil, en même temps que la pesée. Une nuit courte isolée n'a aucune importance. Et le sommeil ne se rattrape pas vraiment : deux grasses matinées restaurent la vigilance, mais pas la régulation de l'appétit ni la sensibilité à l'insuline. Ce qui compte n'est donc pas de rembourser, c'est de ne pas enchaîner.</div>`;
+  <div class="sv-note">Note durée et score au réveil, en même temps que la pesée. Le score est facultatif. Une mauvaise nuit isolée ne veut rien dire — c'est l'enchaînement qui compte, et le sommeil ne se rattrape pas vraiment.</div>`;
 }
 
 function somRows(N){
@@ -1797,7 +1844,7 @@ function somRows(N){
     return `<div class="sv-row">
       <span class="d">${svCourt(e.d)}</span>
       <span class="v">${somFmt(e.h)}</span>
-      <span class="delta">${d>=0?'+':'−'}${somFmt(Math.abs(d))}</span>
+      <span class="delta">${e.q!==null?'score '+e.q:(d>=0?'+':'−')+somFmt(Math.abs(d))}</span>
       <button class="sv-del" data-sv="delz" data-k="${e.iso}" aria-label="Supprimer">×</button>
     </div>`;
   }).join('')+`</div>`;
@@ -1810,7 +1857,9 @@ function somChart(){
   const jours=[];
   for(let k=13;k>=0;k--){
     const d=svAdd(t,-k-1);
-    jours.push({d, h:SV.z&&SV.z[svIso(d)]!==undefined?+SV.z[svIso(d)]:null});
+    const v=SV.z?SV.z[svIso(d)]:undefined;
+    const o=(typeof v==='object'&&v!==null)?v:(v!==undefined?{h:+v}:null);
+    jours.push({d, h:o?+o.h:null, q:(o&&o.q!==undefined)?+o.q:null});
   }
   const max=Math.max(10, ...jours.map(x=>(x.h||0)+0.5));
   const bw=iw/jours.length;
@@ -1835,12 +1884,18 @@ function somChart(){
         height="3" rx="1.5" fill="var(--rule)"/>`;
     }else{
       const h=(j.h/max)*ih;
-      /* degrade d'opacite plutot qu'un code rouge/vert : dix nuits
-         orange sur quatorze donnaient l'impression d'un desastre
-         pour une moyenne de 7 h 21, qui est courte sans etre grave */
-      const op=(0.32+0.68*Math.min(1,j.h/SOM_HAUT)).toFixed(2);
+      /* La hauteur dit la duree, l'intensite dit le score. Une barre
+         haute et pale, c'est une longue nuit de mauvaise qualite —
+         exactement ce qu'une seule mesure ne montrait pas. */
+      const op = (j.q!==null)
+        ? (0.22+0.78*Math.min(1,j.q/90)).toFixed(2)
+        : (0.30+0.50*Math.min(1,j.h/SOM_HAUT)).toFixed(2);
       out+=`<rect x="${x.toFixed(1)}" y="${(T+ih-h).toFixed(1)}" width="${w.toFixed(1)}"
         height="${h.toFixed(1)}" rx="2" fill="var(--sea)" opacity="${op}"/>`;
+      if(j.q===null)
+        out+=`<rect x="${x.toFixed(1)}" y="${(T+ih-h).toFixed(1)}" width="${w.toFixed(1)}"
+          height="${h.toFixed(1)}" rx="2" fill="none" stroke="var(--sea)"
+          stroke-width="1" stroke-dasharray="2 2" opacity=".5"/>`;
     }
     if(i%3===0||i===jours.length-1)
       out+=`<text x="${(x+w/2).toFixed(1)}" y="${H-7}" text-anchor="middle"
@@ -2077,9 +2132,16 @@ function svDrawData(){
       <button class="sv-btn ghost" data-sv="export">Exporter un fichier</button>
       <button class="sv-btn ghost" data-sv="import">Réimporter</button>
       <button class="sv-btn ghost" data-sv="ics">Séances → agenda</button>
+      ${NATIF
+        ? (SV.n
+            ? '<button class="sv-btn ghost" data-sv="noff">Couper les rappels</button>'
+            : '<button class="sv-btn" data-sv="non">Activer les rappels</button>')
+        : '<button class="sv-btn ghost" data-sv="rappels">Rappels → agenda</button>'}
       <input type="file" id="sv-file" accept="application/json,.json" style="display:none">
     </div>
-    <div class="sv-note">« Séances → agenda » génère un fichier de toutes tes séances jusqu'en avril, à importer une fois dans Google Agenda. Aucune synchronisation : si le programme change, tu réexportes.<br><br>Les données vivent dans le navigateur de ce téléphone, nulle part ailleurs. Elles survivent aux mises à jour de l'app, mais pas à un effacement de l'historique Safari ni à un changement de téléphone. Exporte une fois par mois — le fichier part dans Fichiers.</div>
+    <div class="sv-note">« Séances → agenda » génère un fichier de toutes tes séances jusqu'en avril. ${NATIF
+  ? '« Activer les rappels » programme de vraies notifications locales pour les en-cas et le coucher. Elles se déclenchent app fermée et hors ligne. Réactive-les après un changement d\'horaires pour qu\'elles se recalculent.'
+  : '« Rappels → agenda » génère des alertes hebdomadaires pour les en-cas et le coucher — dans Safari, une PWA ne peut pas envoyer de notification, l\'agenda le fait à sa place.'} Aucune synchronisation : si quelque chose change, tu réexportes.<br><br>Les données vivent dans le navigateur de ce téléphone, nulle part ailleurs. Elles survivent aux mises à jour de l'app, mais pas à un effacement de l'historique Safari ni à un changement de téléphone. Exporte une fois par mois — le fichier part dans Fichiers.</div>
   </div>`;
 }
 
@@ -2163,8 +2225,11 @@ document.addEventListener('click', e=>{
     const d=document.getElementById('sv-zd').value;
     const v=parseFloat(String(document.getElementById('sv-zv').value).replace(',','.'));
     if(!d||isNaN(v)||v<2||v>14) return;
-    SV.z[d]=Math.round(v*4)/4; svSave(); svDrawSommeil(); svDrawNav();
-    toast(somFmt(SV.z[d])+' de sommeil enregistré'); return;
+    const qEl=document.getElementById('sv-zq');
+    const q=qEl&&qEl.value!==''?Math.max(0,Math.min(100,parseInt(qEl.value,10))):null;
+    SV.z[d]={h:Math.round(v*4)/4}; if(q!==null&&!isNaN(q)) SV.z[d].q=q;
+    svSave(); svDrawSommeil(); svDrawNav();
+    toast(somFmt(SV.z[d].h)+(q!==null&&!isNaN(q)?' · score '+q:'')+' enregistré'); return;
   }
   if(a==='delz'){ delete SV.z[b.dataset.k]; svSave(); svDrawSommeil(); toast('Nuit supprimée'); return; }
   if(a==='delw'){ delete SV.w[b.dataset.k]; svSave(); svDrawPoids(); svDrawNav(); drawMast(); toast('Pesée supprimée'); return; }
@@ -2184,6 +2249,13 @@ document.addEventListener('click', e=>{
     toast(SV.f[k]?'Ressenti noté':'Ressenti effacé'); return;
   }
   if(a==='export'){ svExport(); return; }
+  if(a==='non'){ activerRappels(); return; }
+  if(a==='noff'){ couperRappels(); return; }
+  if(a==='rappels'){
+    const n=exportRappels();
+    alert(n+" rappels hebdomadaires exportés.\n\nÀ l'import, choisis un NOUVEL agenda (« Get Up — rappels ») plutôt que ton agenda principal : tu pourras tout masquer ou supprimer d'un seul geste si tu t'en lasses.");
+    return;
+  }
   if(a==='ics'){
     const n=exportAgenda();
     alert(n+" séances exportées.\n\nOuvre le fichier depuis Fichiers, puis importe-le dans Google Agenda via calendar.google.com → Paramètres → Importer.");
@@ -2204,6 +2276,140 @@ document.addEventListener('input', e=>{
   if(grp==='t') svRefreshTest(n);
   else { const c=document.getElementById('sv-s'+n); if(c) c.innerHTML=svFlagSang(n); }
 });
+
+/* ============================================================
+   PONT NATIF
+   ------------------------------------------------------------
+   Quand l'app tourne dans sa coquille iOS, elle peut programmer
+   de vraies notifications locales. Dans Safari, ce pont n'existe
+   pas et l'app retombe sur l'export d'agenda.
+   ============================================================ */
+const NATIF = !!(window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.notif);
+function natif(action, extra){
+  if(!NATIF) return false;
+  window.webkit.messageHandlers.notif.postMessage(Object.assign({action}, extra||{}));
+  return true;
+}
+
+/* Liste des rappels, calculee par l'app puis confiee au systeme.
+   weekday suit la convention Apple : 1 = dimanche, 7 = samedi. */
+function rappelsListe(){
+  const out=[];
+  const apple=i=>((i+1)%7)+1;          // 0=lundi -> 2 ; 6=dimanche -> 1
+  const p=rampePalier();
+
+  DAYS.forEach((d,i)=>d.slots.forEach(sl=>{
+    if(!/En-cas|Goûter/.test(sl.role)) return;
+    const [H,M]=sl.h.replace('h',':').split(':').map(Number);
+    const quoi = (sl.h==='10h30') ? poche(p.en)
+               : (sl.txt || (sl.r && R[sl.r] ? R[sl.r].n : 'En-cas'));
+    out.push({ id:'meal-'+i+'-'+sl.h, weekday:apple(i), hour:H, minute:M||0,
+               title:sl.role+' — '+d.n, body:quoi });
+  }));
+
+  for(let i=0;i<7;i++){
+    const dem=svAdd(svLundi(svToday()), i+1);
+    const j=(dem.getDay()===0?6:dem.getDay()-1);
+    const pr=DAYS[j].slots[0].h.replace('h',':').split(':').map(Number);
+    const lever=pr[0]+(pr[1]||0)/60-0.5;
+    let c=lever-(SOM_BAS+0.5)-0.5;     /* trente minutes avant le coucher visé */
+    if(c<0)c+=24;
+    const H=Math.floor(c), M=Math.round((c-H)*60);
+    out.push({ id:'sleep-'+i, weekday:apple(i), hour:H, minute:M,
+               title:'Extinction dans 30 min',
+               body:'Coucher visé pour '+somFmt(SOM_BAS+0.5)+' de sommeil.' });
+  }
+  return out;
+}
+
+function activerRappels(){
+  natif('request');
+  const L=rappelsListe();
+  natif('schedule', {items:L});
+  SV.n=1; svSave(); svDrawData();
+  toast(L.length+' rappels programmés');
+}
+function couperRappels(){
+  natif('clear');
+  SV.n=0; svSave(); svDrawData();
+  toast('Rappels désactivés');
+}
+
+/* ============================================================
+   RAPPELS
+   ------------------------------------------------------------
+   Une PWA ne peut pas programmer de notification locale sur
+   iPhone : l'API n'existe pas dans Safari, et le push web
+   demanderait un serveur. On passe donc par des evenements
+   d'agenda recurrents porteurs d'une alerte, qu'iOS declenche
+   hors ligne. Ils vont dans un agenda dedie, effacable d'un
+   seul geste si tu t'en lasses.
+   ============================================================ */
+const JOURS_ICS=['MO','TU','WE','TH','FR','SA','SU'];
+
+function exportRappels(){
+  const L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Get Up//Rappels//FR','CALSCALE:GREGORIAN',
+           'X-WR-CALNAME:Get Up — rappels'];
+  const fin='20270424T235900Z';
+  const t=svToday();
+  /* premier lundi a venir, pour ancrer les recurrences */
+  const l0=svLundi(t);
+  let n=0;
+
+  const ev=(jour,h,min,titre,desc,avant)=>{
+    const d=svAdd(l0,jour);
+    const st=x=>x.getFullYear()+String(x.getMonth()+1).padStart(2,'0')+String(x.getDate()).padStart(2,'0')
+             +'T'+String(x.getHours()).padStart(2,'0')+String(x.getMinutes()).padStart(2,'0')+'00';
+    const deb=new Date(d.getFullYear(),d.getMonth(),d.getDate(),h,min);
+    const f=new Date(+deb+15*60000);
+    L.push('BEGIN:VEVENT',
+      'UID:getup-r-'+jour+'-'+String(h).padStart(2,'0')+String(min).padStart(2,'0')
+        +'-'+titre.slice(0,6).replace(/\W/g,'')+'@comefourel',
+      'DTSTAMP:'+st(new Date()),
+      'DTSTART:'+st(deb),'DTEND:'+st(f),
+      'RRULE:FREQ=WEEKLY;BYDAY='+JOURS_ICS[jour]+';UNTIL='+fin,
+      'SUMMARY:'+icsEchap(titre),
+      'DESCRIPTION:'+icsEchap(desc),
+      'TRANSP:TRANSPARENT',
+      'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+icsEchap(titre),
+      'TRIGGER:'+(avant?'-PT'+avant+'M':'PT0S'),
+      'END:VALARM','END:VEVENT');
+    n++;
+  };
+
+  /* en-cas et gouters, tels que la semaine type les prevoit */
+  DAYS.forEach((d,i)=>d.slots.forEach(sl=>{
+    if(!/En-cas|Goûter/.test(sl.role)) return;
+    const [H,M]=sl.h.replace('h',':').split(':').map(Number);
+    const p=rampePalier();
+    const quoi = (sl.h==='10h30') ? 'Poche d\'amphi — '+poche(p.en)
+               : (sl.txt||(sl.r&&R[sl.r]?R[sl.r].n:'En-cas'));
+    ev(i,H,M||0, sl.role+' — '+d.n, quoi, 0);
+  }));
+
+  /* coucher : trente minutes avant, pour avoir le temps de ranger */
+  for(let i=0;i<7;i++){
+    const dem=svAdd(l0,i+1);
+    const j=(dem.getDay()===0?6:dem.getDay()-1);
+    const p=DAYS[j].slots[0].h.replace('h',':').split(':').map(Number);
+    const lever=p[0]+(p[1]||0)/60-0.5;
+    let c=lever-(SOM_BAS+0.5);
+    if(c<0)c+=24;
+    const H=Math.floor(c), M=Math.round((c-H)*60);
+    ev(i,H,M,'Extinction — '+DAYS[i].n,
+       'Coucher visé pour '+somFmt(SOM_BAS+0.5)+' de sommeil. Lever prévu vers '
+       +String(Math.floor(lever)).padStart(2,'0')+'h'+String(Math.round((lever%1)*60)).padStart(2,'0')+'.', 30);
+  }
+
+  L.push('END:VCALENDAR');
+  const blob=new Blob([L.join('\r\n')],{type:'text/calendar'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download='get-up-rappels.ics';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+  return n;
+}
 
 /* export / import */
 function svExport(){
@@ -2807,7 +3013,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeRec()});
    SERVICE WORKER — active le fonctionnement hors ligne.
    Ne fait rien en local (file://), c'est normal : il faut HTTPS.
    ============================================================ */
-if('serviceWorker' in navigator){
+if('serviceWorker' in navigator && location.protocol.startsWith('http')){
   window.addEventListener('load',()=>{
     navigator.serviceWorker.register('./sw.js').catch(()=>{});
   });
