@@ -270,17 +270,19 @@ h1,h2,h3{font-family:'Space Grotesk',sans-serif;margin:0;letter-spacing:-.01em}
 .rcard:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
 .thumb{aspect-ratio:16/10;background:var(--sea-soft);display:grid;place-items:center;border-bottom:1px solid var(--rule)}
 .thumb svg{width:100%;height:100%}
-.rbody{padding:12px 13px 14px}
-.rbody .title{display:flex;align-items:center;font-family:'Space Grotesk',sans-serif;
+/* span reste inline par defaut : sa marge interieure gauche etait
+   ignoree des lors que ses enfants sont des blocs */
+.rbody{display:block;padding:13px 16px 15px}
+.rbody .title{display:block;font-family:'Space Grotesk',sans-serif;
   font-weight:500;font-size:15.5px;line-height:1.3;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rbody .title>*{flex:none}
-.rbody .meta{margin-top:7px;display:flex;gap:11px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mute)}
-/* pastille : les angles pointus de l'ancienne etoile juraient
-   avec le reste, qui n'a que des formes arrondies */
-.dot{display:inline-block;width:7px;height:7px;border-radius:50%;
-  background:var(--signal);margin-right:8px;vertical-align:middle;
-  position:relative;top:-1px;flex:none}
+.rbody .meta{margin-top:7px;display:flex;gap:6px 11px;flex-wrap:wrap;
+  font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mute)}
+/* marqueur des recettes au menu : un point seul n'expliquait rien
+   et decalait le titre par rapport a la ligne de details */
+.wk{color:var(--signal);white-space:nowrap}
+.wk::before{content:'';display:inline-block;width:5px;height:5px;border-radius:50%;
+  background:var(--signal);margin-right:5px;vertical-align:middle;position:relative;top:-1px}
 
 /* ---------- modal ---------- */
 .scrim{
@@ -596,7 +598,7 @@ button.ing:focus-visible{outline:2px solid var(--signal);outline-offset:1px}
   <div class="wrap">
     <div class="shead">
       <h2>Recettes</h2>
-      <p>La pastille orange marque les recettes au menu cette semaine. Les autres sont disponibles, elles reviendront dans la rotation.</p>
+      <p>La mention « cette semaine » marque ce qui est au menu en ce moment. Les autres recettes restent disponibles et reviendront dans la rotation.</p>
     </div>
     <div class="filters" id="filters"></div>
     <div class="grid" id="rgrid"></div>
@@ -1124,8 +1126,8 @@ function drawRecipes(){
     <button class="rcard" data-rec="${k}">
       <span class="thumb">${ART[r.art]}</span>
       <span class="rbody">
-        <span class="title">${SEM.has(k)?'<span class="dot" aria-label="Au menu cette semaine"></span>':''}${esc(r.n)}</span>
-        <span class="meta"><span>${r.t} min</span><span>${r.kcal} kcal</span><span>${r.p} g</span></span>
+        <span class="title">${esc(r.n)}</span>
+        <span class="meta"><span>${r.t} min</span><span>${r.kcal} kcal</span><span>${r.p} g</span>${SEM.has(k)?'<span class="wk">cette semaine</span>':''}</span>
       </span>
     </button>`).join('');
 }
