@@ -110,7 +110,7 @@ h1,h2,h3{font-family:'Space Grotesk',sans-serif;margin:0;letter-spacing:-.01em}
 .slot::before{
   content:"";position:absolute;left:-17px;top:17px;width:11px;height:1.5px;background:var(--rule);
 }
-.card{
+.card{position:relative;
   background:var(--paper);border:1px solid var(--rule);border-radius:4px;
   padding:12px 14px;width:100%;text-align:left;cursor:pointer;font:inherit;color:inherit;
   display:block;transition:border-color .15s,transform .12s;
@@ -120,11 +120,14 @@ h1,h2,h3{font-family:'Space Grotesk',sans-serif;margin:0;letter-spacing:-.01em}
 .card:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
 .card.static{cursor:default}
 .card.static:hover{transform:none;border-color:var(--rule)}
-.card .role{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
-.card .title{font-family:'Space Grotesk',sans-serif;font-weight:500;font-size:16.5px;margin-top:3px;line-height:1.25}
+.card .role{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--mute);padding-right:76px}
+.card .title{display:block;font-family:'Space Grotesk',sans-serif;font-weight:500;
+  font-size:16.5px;margin-top:4px;line-height:1.25;text-wrap:balance}
 .card .meta{margin-top:7px;display:flex;gap:12px;flex-wrap:wrap;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--mute)}
 .card .meta b{color:var(--ink);font-weight:500}
-.open-hint{float:right;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--sea);letter-spacing:.08em}
+.open-hint{position:absolute;top:15px;right:16px;font-family:'IBM Plex Mono',monospace;
+  font-size:10px;color:var(--sea);letter-spacing:.08em}
 /* code d'entrainement Garmin, lisible sans ouvrir la fiche */
 .wcode{
   display:inline-block;margin-top:8px;padding:3px 9px;border-radius:3px;
@@ -135,7 +138,7 @@ h1,h2,h3{font-family:'Space Grotesk',sans-serif;margin:0;letter-spacing:-.01em}
 
 /* session block breaks the line */
 .slot.session::before{background:var(--signal);width:18px;left:-24px;height:2px}
-.session .card{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.session .card{position:relative;background:var(--ink);border-color:var(--ink);color:var(--paper)}
 .session .card .role{color:#8FB3AA}
 .session .card .meta{color:#8FB3AA}
 .session .card .meta b{color:var(--paper)}
@@ -1047,14 +1050,15 @@ function drawDay(){
     let k=s.kcal!==undefined?s.kcal:(rec?rec.kcal:0);
     /* rampe : le matin est servi au palier en cours, pas a la cible d'avril */
     const p=rampePalier();
-    let titleOverride=null, noteOverride=null;
+    let titleOverride=null, noteOverride=null, pocheDetail=null;
     if(s.role==='Petit-déjeuner' && cur<6){
       k=p.pd;
       if(!p.plein)noteOverride='Portion réduite — palier '+(RAMPE.findIndex(x=>x.pd===p.pd)+1)+' sur 5';
     }
     if(s.role==='En-cas' && s.h==='10h30'){
       k=p.en;
-      titleOverride=poche(k);
+      titleOverride='Poche d\'amphi';
+      pocheDetail=poche(k);
       noteOverride=(s.note?s.note+' · ':'')+'Se mange en amphi, en plusieurs fois';
     }
     run+=k;
@@ -1063,6 +1067,7 @@ function drawDay(){
     if(rec&&!s.flat&&!s.sess){meta.push(`<b>${k}</b> kcal`);meta.push(`<b>${Math.round(rec.p*k/rec.kcal)}</b> g prot.`);meta.push(`${rec.t} min`);}
     else if(k>0)meta.push(`<b>${k}</b> kcal`);
     if(titleOverride)title=titleOverride;
+    if(pocheDetail)meta.unshift(pocheDetail);
     if(noteOverride)meta.push(noteOverride); else if(s.note)meta.push(s.note);
     /* seance : on va chercher la bonne version dans la phase en cours */
     const w=s.sess?seanceDuJour(cur):null;
@@ -2094,7 +2099,9 @@ function volumeAffiche(w,i){
 function phaseTag(i){
   const p=phaseAt(dateDuJour(i));
   if(p.n<0||p.n>6) return '';
-  return ' · PHASE '+p.n+' — '+p.nom.toUpperCase();
+  /* nom court : le nom complet passait sur deux lignes et venait
+     buter contre le compteur de calories */
+  return ' · PHASE '+p.n;
 }
 /* nombre de jours restants avant le debut du cycle, sinon 0 */
 function avantCycle(){
