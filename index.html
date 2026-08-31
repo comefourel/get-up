@@ -271,9 +271,16 @@ h1,h2,h3{font-family:'Space Grotesk',sans-serif;margin:0;letter-spacing:-.01em}
 .thumb{aspect-ratio:16/10;background:var(--sea-soft);display:grid;place-items:center;border-bottom:1px solid var(--rule)}
 .thumb svg{width:100%;height:100%}
 .rbody{padding:12px 13px 14px}
-.rbody .title{font-family:'Space Grotesk',sans-serif;font-weight:500;font-size:15.5px;line-height:1.25}
+.rbody .title{display:flex;align-items:center;font-family:'Space Grotesk',sans-serif;
+  font-weight:500;font-size:15.5px;line-height:1.3;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rbody .title>*{flex:none}
 .rbody .meta{margin-top:7px;display:flex;gap:11px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mute)}
-.star{color:var(--signal)}
+/* pastille : les angles pointus de l'ancienne etoile juraient
+   avec le reste, qui n'a que des formes arrondies */
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;
+  background:var(--signal);margin-right:8px;vertical-align:middle;
+  position:relative;top:-1px;flex:none}
 
 /* ---------- modal ---------- */
 .scrim{
@@ -589,7 +596,7 @@ button.ing:focus-visible{outline:2px solid var(--signal);outline-offset:1px}
   <div class="wrap">
     <div class="shead">
       <h2>Recettes</h2>
-      <p>Les illustrations sont dessinées, pas photographiées — je n'ai pas de banque d'images à te proposer.</p>
+      <p>La pastille orange marque les recettes au menu cette semaine. Les autres sont disponibles, elles reviendront dans la rotation.</p>
     </div>
     <div class="filters" id="filters"></div>
     <div class="grid" id="rgrid"></div>
@@ -771,7 +778,7 @@ const R={
   st:["Vendredi 8h00 : tout mélanger dans un tupperware.","Fermer, frigo.","22h20 : manger dans la voiture ou en rentrant."],
   tip:"Ça épaissit dans la journée — c'est voulu. À 22h20 après deux heures de bassin, tu ne prépareras rien."},
 
- maquereau:{n:"Maquereau au four, patates douces, épinards",art:"fish",t:30,kcal:950,p:45,tag:"dîner",
+ maquereau:{n:"Maquereau, patates douces, épinards",art:"fish",t:30,kcal:950,p:45,tag:"dîner",
   ing:[["Maquereaux frais","2"],["Patates douces","400 g"],["Épinards en boîte","1"],["Ail, thym, citron",""]],
   st:["Patates douces en cubes, huile, sel — four 200 °C, 25 min.","À 10 min de la fin : poser les maquereaux sur la plaque, huile, citron, sel, thym.","Épinards égouttés et rincés, poêlés 4 min avec ail et huile."],
   tip:"Sans poisson frais : 2 boîtes de maquereau au naturel, réchauffées 3 min à la poêle avec du citron. Même profil, zéro contrainte d'achat."},
@@ -1111,12 +1118,13 @@ function drawFilters(){
   $('#filters').innerHTML=TAGS.map(t=>`<button class="chip${t===filt?' on':''}" data-tag="${t}">${t}</button>`).join('');
 }
 function drawRecipes(){
+  const SEM=recettesDeLaSemaine();
   const list=Object.entries(R).filter(([,r])=>filt==="tout"||r.tag===filt);
   $('#rgrid').innerHTML=list.map(([k,r])=>`
     <button class="rcard" data-rec="${k}">
       <span class="thumb">${ART[r.art]}</span>
       <span class="rbody">
-        <span class="title">${r.star?'<span class="star">★</span> ':''}${esc(r.n)}</span>
+        <span class="title">${SEM.has(k)?'<span class="dot" aria-label="Au menu cette semaine"></span>':''}${esc(r.n)}</span>
         <span class="meta"><span>${r.t} min</span><span>${r.kcal} kcal</span><span>${r.p} g</span></span>
       </span>
     </button>`).join('');
@@ -2351,6 +2359,17 @@ function poche(kcal){
   return best.l;
 }
 
+/* recettes effectivement au menu de la semaine en cours.
+   L'ancienne etoile marquait les recettes du plan d'origine ;
+   depuis la rotation, cette liste bouge chaque semaine. */
+function recettesDeLaSemaine(){
+  const set=new Set();
+  DAYS.forEach((d,i)=>d.slots.forEach(sl=>{
+    if(sl.r) set.add(recetteDuJour(sl.r,i));
+  }));
+  return set;
+}
+
 /* bandeau d'en-tete : poids reel, phase, palier de rampe.
    Avant, il affichait 68 kg en dur — une valeur qui allait
    devenir fausse des la premiere pesee. */
@@ -2364,9 +2383,11 @@ function drawMast(){
   const bits=[];
   bits.push(moy!==null
     ? moy.toFixed(1).replace('.',',')+' kg → '+SV_CIBLE[0]+' kg'
-    : SV_ANCRE.kg+' kg → '+SV_CIBLE[0]+'–'+SV_CIBLE[1]+' kg');
-  if(p.n>=0&&p.n<=6) bits.push('phase '+p.n);
+    : SV_ANCRE.kg+' kg → '+SV_CIBLE[0]+' kg');
+  /* la phase est deja dans l'en-tete du jour : ici elle faisait
+     passer la ligne sur deux niveaux */
   if(!r.plein) bits.push('palier '+(RAMPE.findIndex(x=>x.pd===r.pd)+1)+'/5');
+  else if(p.n>=0&&p.n<=6) bits.push('phase '+p.n);
   el.textContent=bits.join(' · ');
 }
 
