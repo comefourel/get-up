@@ -500,6 +500,21 @@ button.ing:focus-visible{outline:2px solid var(--signal);outline-offset:1px}
   color:var(--ink);line-height:1.5}
 .sv-flag.ok{border-left-color:var(--sea);background:var(--sea-soft)}
 
+/* confirmation breve apres une action : sans ca, on ne sait pas
+   si l'enregistrement a pris */
+#toast{
+  position:fixed;left:50%;bottom:104px;transform:translateX(-50%) translateY(12px);
+  background:var(--ink);color:var(--paper);border-radius:4px;
+  padding:11px 18px;font-family:'IBM Plex Mono',monospace;font-size:12px;
+  letter-spacing:.04em;box-shadow:0 6px 24px rgba(16,31,28,.28);
+  z-index:80;opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;
+  max-width:calc(100% - 40px);text-align:center;
+  padding-bottom:calc(11px + env(safe-area-inset-bottom,0px));
+}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.lbl sup.adj{font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.06em;
+  color:var(--sea);background:var(--sea-soft);padding:2px 5px;border-radius:3px;
+  margin-left:6px;vertical-align:middle;top:0}
 .sv-note{font-size:13.5px;color:var(--mute);line-height:1.5;margin-top:10px}
 
 /* fiche de seance : la valeur peut etre longue, elle passe a la ligne
@@ -545,7 +560,7 @@ button.ing:focus-visible{outline:2px solid var(--signal);outline-offset:1px}
   <header class="masthead">
     <h1>Semaine type</h1>
     <div class="sub">
-      <span>68 kg → 71–72 kg · 6 séances</span>
+      <span id="mast">—</span>
       <span class="countdown" id="cd">—</span>
     </div>
   </header>
@@ -614,6 +629,8 @@ button.ing:focus-visible{outline:2px solid var(--signal);outline-offset:1px}
     <div id="sv-data" class="sv-block"></div>
   </div>
 </section>
+
+<div id="toast" role="status" aria-live="polite"></div>
 
 <div class="scrim" id="scrim"><div class="sheet" id="sheet"></div></div>
 
@@ -974,13 +991,6 @@ const COOK=[
   yield:["3 portions de chili ou de dahl — 4 jours","300 g de féculent cuit — 3 jours"]}
 ];
 
-const RULES=[
- ["01","Le petit-déjeuner ne se saute pas","Même sans faim. C'est lui qui porte la journée."],
- ["02","Pas de froid après le renfo","Mardi et jeudi. L'immersion froide post-musculation atténue la signalisation anabolique et émousse les gains de force."],
- ["03","Gourde au bord du bassin","Lundi et vendredi. L'immersion supprime la sensation de soif et augmente la production d'urine — tu ne sentiras rien. Bois quand même."],
- ["04","Thermos avant de te rhabiller","Dimanche. Chaud, sucré et salé. Le réchauffement passe par l'intérieur."],
- ["05","Dernier café à 15h30","15h00 le vendredi. Demi-vie de 5 à 6 heures — c'est la règle la plus dure à tenir et la plus rentable."]
-];
 const FALLBACK=[
  ["6 séances","Tout"],["5","Tout sauf un renfo"],["4","Piscines, course et mer. Micro-renfo collé en fin de séance"],["3","Vendredi, dimanche et une piscine"],["2","Vendredi et dimanche"],["1","Une séance d'eau, point"]
 ];
@@ -1015,11 +1025,18 @@ function drawDays(){
   $('#dayrow').innerHTML=DAYS.map((d,i)=>
     `<button class="daybtn${i===cur?' on':''}" data-load="${d.load}" data-i="${i}" aria-label="${d.n}"><span>${d.label}</span><span class="dot"></span></button>`).join('');
 }
+/* cible du jour : programme d'avril, moins la rampe, moins la
+   séance si la phase en cours ne la prévoit pas */
+function cibleDuJour(i){
+  return DAYS[i].kcal - (i<6?rampeRetrait():0) - retraitSeance(i);
+}
+
 function drawDay(){
   const d=DAYS[cur];
   let run=0;const tot=d.kcal;
   const slots=d.slots.map(s=>{
-    const rec=s.r?R[s.r]:null;
+    const rKey=s.r?recetteDuJour(s.r,cur):null;
+    const rec=rKey?R[rKey]:null;
     let k=s.kcal!==undefined?s.kcal:(rec?rec.kcal:0);
     /* rampe : le matin est servi au palier en cours, pas a la cible d'avril */
     const p=rampePalier();
@@ -1047,7 +1064,7 @@ function drawDay(){
       if(vol)meta.unshift(vol);
       meta.unshift(w.dur);
     }
-    const clic = rec ? `data-rec="${s.r}"` : (w ? 'data-seance="1"' : '');
+    const clic = rec ? `data-rec="${rKey}"` : (w ? 'data-seance="1"' : '');
     const btn = (rec||w) ? 'button' : 'div';
     return `<div class="slot${s.sess?' session':''}">
       <span class="clock mono">${s.h}</span>
@@ -1063,13 +1080,15 @@ function drawDay(){
   $('#dayview').innerHTML=`
     <div class="dayhead">
       <div><h2>${d.n}</h2><span class="tag">${esc(d.title)}${phaseTag(cur)}</span></div>
-      <div class="target"><b>${(d.kcal-(cur<6?rampeRetrait():0)).toLocaleString('fr-FR')}</b><span>KCAL AUJOURD'HUI</span></div>
+      <div class="target"><b>${cibleDuJour(cur).toLocaleString('fr-FR')}</b><span>KCAL AUJOURD'HUI</span></div>
     </div>
+    ${(()=>{const r=retraitSeance(cur);if(!r)return '';
+      return `<div class="warn"><b>Pas de séance ce jour dans la phase en cours.</b> La cible descend de ${r} kcal — c'est la dépense de la séance qui disparaît, pas une restriction.</div>`;})()}
     ${(()=>{const p=rampePalier();if(p.plein)return '';
       return `<div class="warn"><b>Montée en charge, semaine ${p.sem+1}.</b> ${esc(p.note)} Cible d'avril : ${d.kcal.toLocaleString('fr-FR')} kcal.</div>`;})()}
     ${d.warn?`<div class="warn">${d.warn}</div>`:''}
     <div class="timeline"><div class="tide" id="tide"></div>${slots}</div>`;
-  const cible=d.kcal-(cur<6?rampeRetrait():0);
+  const cible=cibleDuJour(cur);
   requestAnimationFrame(()=>{const t=$('#tide');if(t)t.style.height=Math.min(100,run/cible*100)+'%';});
 }
 
@@ -1131,22 +1150,29 @@ function closeRec(){$('#scrim').classList.remove('on');document.body.style.overf
 /* --- courses --- */
 function drawShop(){
   let n=0,done=0,drive=0,mkt=0,amortNote=0;
+  const RC=rampeCourses();
   const html=SHOP.map((g,gi)=>`
     <div class="rayon"><h3>${esc(g.r)}</h3>
     ${g.i.map((it,ii)=>{
-      const id=gi+'-'+ii;n++;
+      const id=gi+'-'+ii;
+      /* surcharge de rampe : quantité recalculée pour la poche */
+      const ov=RC[it.n];
+      const q   = ov?ov.q:it.q;
+      const px  = ov?ov.p:it.p;
+      const am  = ov?0:it.amort;
+      n++;
       const on=state.shop[id];if(on)done++;
       const src=(state.src[id]!==undefined)?state.src[id]:(it.mkt?1:0);
-      const cost=it.amort?it.p/it.amort:it.p;
+      const cost=am?px/am:px;
       if(src)mkt+=cost;else drive+=cost;
-      if(it.amort)amortNote=1;
+      if(am)amortNote=1;
       return `<div class="item${on?' done':''}${it.key?' key':''}">
         <span class="hit" data-shop="${id}">
           <span class="box"><svg viewBox="0 0 12 12"><path d="M2 6.5l2.5 2.5L10 3"/></svg></span>
-          <span class="lbl">${esc(it.n)}${it.amort?'<sup>*</sup>':''}</span>
+          <span class="lbl">${esc(it.n)}${am?'<sup>*</sup>':''}${ov?'<sup class="adj">ajusté</sup>':''}</span>
         </span>
         <span class="right">
-          <span class="qty">${esc(it.q)}</span>
+          <span class="qty">${esc(q)}</span>
           <button class="src${src?' mk':''}" data-src="${id}" aria-label="Changer la source">${src?'Marché':'Drive'}</button>
           <span class="pr">${cost.toFixed(2).replace('.',',')}&nbsp;€</span>
         </span>
@@ -1193,11 +1219,6 @@ function drawCook(){
     </div>`).join('');
 }
 
-/* --- règles --- */
-function drawRules(){
-  $('#rules').innerHTML=RULES.map(r=>`<div class="rule-item"><span class="n mono">${r[0]}</span><div><b>${esc(r[1])}</b><p>${esc(r[2])}</p></div></div>`).join('');
-  $('#fallback').innerHTML=FALLBACK.map(f=>`<tr><td>${esc(f[0])}</td><td>${esc(f[1])}</td></tr>`).join('');
-}
 
 /* ============================================================
    SUIVI
@@ -1275,11 +1296,6 @@ function svToSec(s){
   if(m) return (+m[1])*60+parseFloat(m[2]);
   const v=parseFloat(s);
   return isNaN(v)?null:v;
-}
-function svFmtSec(v){
-  if(v===null||v===undefined||isNaN(v)) return '—';
-  const m=Math.floor(v/60), s=v-m*60;
-  return m>0 ? m+':'+String(Math.round(s)).padStart(2,'0') : (Math.round(s*10)/10)+'s';
 }
 
 /* ---------- trajectoire de poids ---------- */
@@ -1783,20 +1799,24 @@ document.addEventListener('click', e=>{
     const d=document.getElementById('sv-wd').value;
     const v=parseFloat(String(document.getElementById('sv-wv').value).replace(',','.'));
     if(!d||isNaN(v)||v<45||v>120) return;
-    SV.w[d]=Math.round(v*10)/10; svSave(); svDrawPoids(); return;
+    SV.w[d]=Math.round(v*10)/10; svSave(); svDrawPoids(); drawMast();
+    toast(String(Math.round(v*10)/10).replace('.',',')+' kg enregistré'); return;
   }
-  if(a==='delw'){ delete SV.w[b.dataset.k]; svSave(); svDrawPoids(); return; }
+  if(a==='delw'){ delete SV.w[b.dataset.k]; svSave(); svDrawPoids(); drawMast(); toast('Pesée supprimée'); return; }
 
   if(a==='wk'){ svWk=Math.min(0, svWk+ +b.dataset.v); svDrawSeances(); return; }
   if(a==='tog'){
     const k=b.dataset.k;
-    if(SV.s[k]) delete SV.s[k]; else SV.s[k]=1;
-    svSave(); svDrawSeances(); return;
+    const av=!!SV.s[k];
+    if(av) delete SV.s[k]; else SV.s[k]=1;
+    svSave(); svDrawSeances();
+    toast(av?'Séance décochée':'Séance validée'); return;
   }
   if(a==='feel'){
     const k=b.dataset.k, v=+b.dataset.v;
     if(SV.f[k]===v) delete SV.f[k]; else SV.f[k]=v;
-    svSave(); svDrawRessenti(); return;
+    svSave(); svDrawRessenti();
+    toast(SV.f[k]?'Ressenti noté':'Ressenti effacé'); return;
   }
   if(a==='export'){ svExport(); return; }
   if(a==='ics'){
@@ -1840,7 +1860,7 @@ document.addEventListener('change', e=>{
       const p=JSON.parse(r.result);
       if(p.suivi) SV=Object.assign({w:{},s:{},f:{},t:{},b:{}}, p.suivi);
       if(p.etat){ state=Object.assign({shop:{},steps:{},src:{}}, p.etat); save(); drawShop(); drawCook(); }
-      svSave(); drawSuivi();
+      svSave(); drawSuivi(); drawMast();
     }catch(err){ alert("Fichier illisible."); }
     e.target.value='';
   };
@@ -2199,6 +2219,104 @@ function rampeRetrait(){
 }
 
 /* ============================================================
+   CIBLE CALORIQUE ADOSSÉE À LA SÉANCE RÉELLE
+   ------------------------------------------------------------
+   Les cibles étaient figées par jour de semaine. En janvier,
+   l'app affichait 3000 kcal le mardi pour un Renfo A que la
+   phase 3 ne prévoit pas. On retire l'apport de la séance quand
+   la séance n'existe pas.
+   ============================================================ */
+/* coût énergétique approximatif d'une séance, par type */
+const COUT_SEANCE = {
+  'Natation piscine': 500,
+  'Course à pied':    450,
+  'Musculation':      300,
+  'Mer, Saint-Malo':  700
+};
+/* jour sans séance dans la phase en cours : on retire le coût
+   de la séance que la semaine type prévoyait */
+function retraitSeance(i){
+  const d=DAYS[i];
+  if(i===5) return 0;                     // samedi : mobilité, hors grille des phases
+  const prevu = d.slots.some(x=>x.sess);
+  if(!prevu) return 0;
+  if(seanceDuJour(i)) return 0;           // la séance a bien lieu
+  const t={0:'Natation piscine',1:'Musculation',2:'Course à pied',
+           3:'Musculation',4:'Natation piscine',6:'Mer, Saint-Malo'}[i];
+  return COUT_SEANCE[t]||300;
+}
+
+/* ============================================================
+   ROTATION DES REPAS
+   ------------------------------------------------------------
+   Le porridge revenait six jours sur sept. Six recettes étaient
+   déjà écrites et programmées nulle part. La rotation tourne sur
+   la semaine du cycle, comme les séances du dimanche.
+   ============================================================ */
+const ROTATION = {
+  'porridge':  ['porridge','oats','smoothie'],
+  'chili':     ['chili','dahl'],
+  'sardines':  ['sardines','urgence'],
+  'poulet':    ['poulet','shakshuka'],
+  'omelette':  ['omelette','urgence2'],
+  'bowl':      ['bowl','poelee']
+};
+/* décalage : chaque créneau tourne à son rythme pour éviter que
+   toute la semaine bascule d'un coup */
+const ROT_DECAL = {'porridge':0,'chili':1,'sardines':2,'poulet':0,'omelette':1,'bowl':2};
+
+function semaineRotation(){
+  const t=new Date(); t.setHours(0,0,0,0);
+  return Math.max(0, Math.floor((t-wFrom(RAMPE_DEBUT))/(7*864e5)));
+}
+/* recette effectivement servie pour un créneau donné */
+function recetteDuJour(base, jour){
+  const L=ROTATION[base];
+  if(!L) return base;
+  const w=semaineRotation()+(ROT_DECAL[base]||0);
+  /* le jour entre dans le calcul pour qu'un même plat ne revienne
+     pas deux fois dans la même semaine */
+  return L[((w+jour)%L.length+L.length)%L.length];
+}
+
+/* ============================================================
+   COURSES — les quantités suivent le palier de la rampe
+   ------------------------------------------------------------
+   La poche remplace le skyr de 10h30 cinq jours par semaine.
+   Sans cet ajustement, la liste achète du skyr qu'on ne mange
+   plus et pas assez de fruits secs.
+   ============================================================ */
+const POCHE_JOURS = 5;                      // lundi à vendredi
+
+/* grammages de la poche, par palier */
+const POCHE_G = [
+  {noix:30, dattes:40, comte:30, barre:0},
+  {noix:45, dattes:50, comte:30, barre:0},
+  {noix:50, dattes:50, comte:35, barre:0},
+  {noix:55, dattes:50, comte:40, barre:0},
+  {noix:60, dattes:50, comte:40, barre:1}
+];
+function pocheIndex(){
+  const p=rampePalier();
+  let i=0; RAMPE.forEach((x,j)=>{if(p.sem>=x.s)i=j;});
+  return i;
+}
+/* quantité et prix hebdomadaires, poche comprise */
+function rampeCourses(){
+  const g=POCHE_G[pocheIndex()], J=POCHE_JOURS;
+  const noix   = 150 + g.noix*J;            // 150 g d'usages hors poche
+  const dattes =  50 + g.dattes*J;
+  const comte  = 250 + g.comte*J;
+  return {
+    "Amandes et noix":        {q:noix+' g',        p:noix/1000*14},
+    "Dattes et abricots secs":{q:dattes+' g',      p:dattes/1000*8},
+    "Comté ou emmental":      {q:comte+' g',       p:comte/1000*12.5},
+    "Skyr ou fromage blanc":  {q:'1,2 kg',         p:4.2},
+    "Barres maison":          {q:g.barre?J+' barres':'—', p:0, skip:!g.barre}
+  };
+}
+
+/* ============================================================
    LA POCHE — ce qui se mange en amphi
    ------------------------------------------------------------
    D'une main, sans odeur, sans couverts, en plusieurs fois.
@@ -2217,6 +2335,34 @@ function poche(kcal){
   let best=T[0];
   for(const x of T) if(kcal>=x.k) best=x;
   return best.l;
+}
+
+/* bandeau d'en-tete : poids reel, phase, palier de rampe.
+   Avant, il affichait 68 kg en dur — une valeur qui allait
+   devenir fausse des la premiere pesee. */
+function drawMast(){
+  const el=$('#mast'); if(!el) return;
+  const P=Object.keys(SV.w||{}).sort();
+  const L=P.length?svLisse(P.map(k=>({d:svFromIso(k),kg:+SV.w[k]}))):[];
+  const moy=L.length?L[L.length-1].kg:null;
+  const p=phaseAt(new Date());
+  const r=rampePalier();
+  const bits=[];
+  bits.push(moy!==null
+    ? moy.toFixed(1).replace('.',',')+' kg → '+SV_CIBLE[0]+' kg'
+    : SV_ANCRE.kg+' kg → '+SV_CIBLE[0]+'–'+SV_CIBLE[1]+' kg');
+  if(p.n>=0&&p.n<=6) bits.push('phase '+p.n);
+  if(!r.plein) bits.push('palier '+(RAMPE.findIndex(x=>x.pd===r.pd)+1)+'/5');
+  el.textContent=bits.join(' · ');
+}
+
+/* confirmation breve, annoncee aussi aux lecteurs d'ecran */
+let toastT=null;
+function toast(msg){
+  const el=$('#toast'); if(!el) return;
+  el.textContent=msg; el.classList.add('on');
+  clearTimeout(toastT);
+  toastT=setTimeout(()=>el.classList.remove('on'), 2200);
 }
 
 /* --- nav --- */
@@ -2271,7 +2417,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeRec()});
   await load();
   await svLoad();
   drawNav();drawDays();drawDay();drawFilters();drawRecipes();drawShop();drawCook();
-  drawSuivi();
+  drawSuivi();drawMast();
 })();
 
 /* ============================================================
