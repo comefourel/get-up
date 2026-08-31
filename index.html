@@ -1020,13 +1020,26 @@ function drawDay(){
   let run=0;const tot=d.kcal;
   const slots=d.slots.map(s=>{
     const rec=s.r?R[s.r]:null;
-    const k=s.kcal!==undefined?s.kcal:(rec?rec.kcal:0);
+    let k=s.kcal!==undefined?s.kcal:(rec?rec.kcal:0);
+    /* rampe : le matin est servi au palier en cours, pas a la cible d'avril */
+    const p=rampePalier();
+    let titleOverride=null, noteOverride=null;
+    if(s.role==='Petit-déjeuner' && cur<6){
+      k=p.pd;
+      if(!p.plein)noteOverride='Portion réduite — palier '+(RAMPE.findIndex(x=>x.pd===p.pd)+1)+' sur 5';
+    }
+    if(s.role==='En-cas' && s.h==='10h30'){
+      k=p.en;
+      titleOverride=poche(k);
+      noteOverride=(s.note?s.note+' · ':'')+'Se mange en amphi, en plusieurs fois';
+    }
     run+=k;
-    const title=s.txt||(rec?rec.n:'');
+    let title=s.txt||(rec?rec.n:'');
     const meta=[];
-    if(rec&&!s.flat&&!s.sess){meta.push(`<b>${rec.kcal}</b> kcal`);meta.push(`<b>${rec.p}</b> g prot.`);meta.push(`${rec.t} min`);}
+    if(rec&&!s.flat&&!s.sess){meta.push(`<b>${k}</b> kcal`);meta.push(`<b>${Math.round(rec.p*k/rec.kcal)}</b> g prot.`);meta.push(`${rec.t} min`);}
     else if(k>0)meta.push(`<b>${k}</b> kcal`);
-    if(s.note)meta.push(s.note);
+    if(titleOverride)title=titleOverride;
+    if(noteOverride)meta.push(noteOverride); else if(s.note)meta.push(s.note);
     /* seance : on va chercher la bonne version dans la phase en cours */
     const w=s.sess?seanceDuJour(cur):null;
     if(w){
@@ -1050,12 +1063,14 @@ function drawDay(){
   $('#dayview').innerHTML=`
     <div class="dayhead">
       <div><h2>${d.n}</h2><span class="tag">${esc(d.title)}${phaseTag(cur)}</span></div>
-      <div class="target"><b>${d.kcal.toLocaleString('fr-FR')}</b><span>KCAL CIBLE</span></div>
+      <div class="target"><b>${(d.kcal-(cur<6?rampeRetrait():0)).toLocaleString('fr-FR')}</b><span>KCAL AUJOURD'HUI</span></div>
     </div>
-    ${avantCycle()?`<div class="warn"><b>Reprise anticipée.</b> Le cycle officiel démarre le 7 septembre, ${avantCycle()}. D'ici là tu es sur la phase 0 — même contenu, volume de départ.</div>`:''}
+    ${(()=>{const p=rampePalier();if(p.plein)return '';
+      return `<div class="warn"><b>Montée en charge, semaine ${p.sem+1}.</b> ${esc(p.note)} Cible d'avril : ${d.kcal.toLocaleString('fr-FR')} kcal.</div>`;})()}
     ${d.warn?`<div class="warn">${d.warn}</div>`:''}
     <div class="timeline"><div class="tide" id="tide"></div>${slots}</div>`;
-  requestAnimationFrame(()=>{const t=$('#tide');if(t)t.style.height=Math.min(100,run/tot*100)+'%';});
+  const cible=d.kcal-(cur<6?rampeRetrait():0);
+  requestAnimationFrame(()=>{const t=$('#tide');if(t)t.style.height=Math.min(100,run/cible*100)+'%';});
 }
 
 /* --- recettes --- */
@@ -2139,6 +2154,69 @@ function exportAgenda(){
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),1500);
   return n;
+}
+
+/* ============================================================
+   RAMPE ALIMENTAIRE
+   ------------------------------------------------------------
+   Les cibles du programme sont celles d'avril, pas celles de
+   septembre. Les afficher dès le premier jour, c'est demander
+   980 kcal à 7h45 à quelqu'un qui n'a pas faim au réveil.
+   La rampe ne touche que le matin : le reste de la journée est
+   déjà mangeable aujourd'hui.
+   ============================================================ */
+
+const RAMPE_DEBUT = '2026-08-31';       // lundi 31 août 2026
+
+/* état d'arrivée : 650 à 7h45 + 650 à 10h30.
+   Deux prises de 30 g de protéines valent mieux qu'une de 52,
+   la synthèse musculaire plafonnant autour de 30-40 g par prise. */
+const RAMPE = [
+  { s:0,  pd:350, en:350, note:"Tu gardes ton bol actuel. Tout le gain est à 10h30, quand la faim est là." },
+  { s:2,  pd:400, en:500, note:"La poche de 10h30 grossit. Le réveil bouge à peine." },
+  { s:4,  pd:500, en:550, note:"Premier vrai palier au réveil. Si ça passe mal, reste une semaine de plus ici." },
+  { s:6,  pd:550, en:600, note:"L'écart avec la cible se referme." },
+  { s:8,  pd:650, en:680, note:"Pleine charge. À partir d'ici les cibles affichées sont celles du programme." }
+];
+
+/* semaine de rampe, 0 pour la première */
+function rampeSem(){
+  const t=new Date(); t.setHours(0,0,0,0);
+  const d=wFrom(RAMPE_DEBUT);
+  return Math.max(0, Math.floor((t-d)/(7*864e5)));
+}
+function rampePalier(){
+  const s=rampeSem();
+  let p=RAMPE[0];
+  for(const x of RAMPE) if(s>=x.s) p=x;
+  return Object.assign({}, p, {sem:s, plein:(p===RAMPE[RAMPE.length-1])});
+}
+/* kcal retirées à la cible du jour tant que la rampe monte */
+const MATIN_ORIGINE = 980 + 350;   // porridge complet + en-cas, version du programme
+function rampeRetrait(){
+  const p=rampePalier();
+  return MATIN_ORIGINE-(p.pd+p.en);
+}
+
+/* ============================================================
+   LA POCHE — ce qui se mange en amphi
+   ------------------------------------------------------------
+   D'une main, sans odeur, sans couverts, en plusieurs fois.
+   Le skyr suppose une cuillère et un frigo : il repasse le soir.
+   ============================================================ */
+function poche(kcal){
+  /* on compose la poche à la valeur du palier en cours */
+  const T=[
+    {k:350, l:"30 g d'amandes · 40 g de dattes · 30 g de comté"},
+    {k:500, l:"45 g de noix et amandes · 50 g de dattes · 30 g de comté"},
+    {k:550, l:"50 g de noix et amandes · 50 g de dattes · 35 g de comté"},
+    {k:600, l:"55 g de noix et amandes · 50 g de dattes · 40 g de comté"},
+    {k:650, l:"60 g de noix et amandes · 50 g de dattes · 40 g de comté"},
+    {k:680, l:"60 g de noix et amandes · 50 g de dattes · 40 g de comté + 1 barre maison"}
+  ];
+  let best=T[0];
+  for(const x of T) if(kcal>=x.k) best=x;
+  return best.l;
 }
 
 /* --- nav --- */
