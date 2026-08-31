@@ -297,7 +297,12 @@ h1,h2,h3{font-family:'Space Grotesk',sans-serif;margin:0;letter-spacing:-.01em}
 .sheet .body{padding:20px 22px 8px}
 .sheet h3{font-size:25px;font-weight:700;line-height:1.12}
 .stats{display:flex;gap:0;margin:16px 0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
-.stat{flex:1;padding:11px 0;border-right:1px solid var(--rule)}
+.stat{flex:1;min-width:0;padding:11px 14px;border-right:1px solid var(--rule)}
+/* les colonnes suivantes sont precedees d'un filet vertical :
+   sans marge, les chiffres viennent le toucher */
+.stat+.stat{padding-left:20px}
+.stat:first-child{padding-left:0}
+.stat:last-child{padding-right:0}
 .stat:last-child{border-right:0}
 .stat b{display:block;font-family:'Space Grotesk',sans-serif;font-size:19px;font-weight:700;line-height:1}
 .stat span{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--mute);letter-spacing:.1em;text-transform:uppercase}
@@ -520,11 +525,13 @@ button.ing:focus-visible{outline:2px solid var(--signal);outline-offset:1px}
 /* fiche de seance : la valeur peut etre longue, elle passe a la ligne
    au lieu d'ecraser son libelle */
 .wbody{position:relative}
-.wrow{display:flex;justify-content:space-between;gap:16px;align-items:baseline;
-  padding:9px 0;border-bottom:1px solid rgba(195,204,196,.55);font-size:15px}
+.wbody>.eyebrow{padding-right:46px}
+.wrow{display:flex;flex-wrap:wrap;justify-content:space-between;gap:2px 16px;
+  align-items:baseline;padding:9px 0;
+  border-bottom:1px solid rgba(195,204,196,.55);font-size:15px}
 .wrow:last-of-type{border-bottom:0}
 .wrow .q{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--mute);
-  text-align:right;flex:0 1 auto;min-width:0}
+  text-align:right;flex:0 0 auto;white-space:nowrap;margin-left:auto;padding-right:1px}
 .wrow .l{flex:1 1 auto;min-width:0}
 .wrow.pro .l{font-weight:600}
 .wrow.pro .q{color:var(--sea)}
@@ -2107,7 +2114,7 @@ function openSeance(i){
   $('#sheet').innerHTML=`
     <div class="body wbody" style="padding-top:26px">
       <button class="closebtn" id="cl" style="top:14px;right:14px" aria-label="Fermer">✕</button>
-      <span class="eyebrow" style="display:block">${esc(w.type)} · Phase ${p.n} — ${esc(p.nom)}</span>
+      <span class="eyebrow" style="display:block;padding-right:52px">${esc(w.type)} · Phase ${p.n} — ${esc(p.nom)}</span>
       <h3 style="margin-top:6px">${esc(w.t)}</h3>
       <div class="stats">
         <div class="stat"><b>${esc(w.code)}</b><span>code</span></div>
