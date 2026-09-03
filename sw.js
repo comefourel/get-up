@@ -6,7 +6,7 @@
    les fichiers sur GitHub. Sans ça, ton iPhone continuera de
    servir l'ancienne version depuis son cache.
    ============================================================ */
-const VERSION = 'v19';
+const VERSION = 'v20';
 
 const SHELL = `semaine-shell-${VERSION}`;
 const FONTS = `semaine-fonts-${VERSION}`;
