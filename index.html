@@ -129,6 +129,15 @@ h1,h2,h3{font-family:'Space Grotesk',sans-serif;margin:0;letter-spacing:-.01em}
 .open-hint{position:absolute;top:15px;right:16px;font-family:'IBM Plex Mono',monospace;
   font-size:10px;color:var(--sea);letter-spacing:.08em}
 /* code d'entrainement Garmin, lisible sans ouvrir la fiche */
+/* Même place que « RECETTE → », mais lisible : la couleur d'origine
+   était le vert de mer, invisible sur la carte noire de la séance. */
+.wopen{
+  color:var(--signal);text-transform:uppercase;
+  display:inline-flex;align-items:center;gap:5px;
+}
+.wopen em{font-style:normal;font-size:13px}
+.card:hover .wopen{color:var(--paper)}
+
 .wcode{
   display:inline-block;margin-top:8px;padding:3px 9px;border-radius:3px;
   background:var(--signal);color:var(--paper);
@@ -576,6 +585,33 @@ button.ing:focus-visible{outline:2px solid var(--signal);outline-offset:1px}
   background:var(--sea-soft);color:var(--sea);padding:4px 9px;border-radius:20px}
 .sv-conseil .c-note{margin-top:9px;font-size:11.5px;color:var(--rule);
   font-family:'IBM Plex Mono',monospace;letter-spacing:.03em}
+
+/* exercice depliable dans la fiche de seance */
+.exo{border-bottom:1px solid rgba(195,204,196,.55)}
+.exo:last-of-type{border-bottom:0}
+.exo-h{width:100%;background:none;border:0;border-bottom:0;cursor:pointer;
+  text-align:left;font:inherit;color:inherit;padding:9px 0}
+.exo-c{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--sea);flex:none;margin-left:10px}
+.exo.open .exo-c{color:var(--mute)}
+.exo.open .exo-c::after{content:''}
+.exo-b{display:none;padding:2px 0 16px}
+.exo.open .exo-b{display:block}
+.exo-fr{display:flex;gap:10px}
+.exo-f{flex:1;min-width:0;margin:0}
+.exo-f svg{width:100%;height:auto;display:block;background:var(--fog);
+  border:1px solid var(--rule);border-radius:4px}
+.exo-f figcaption{font-family:'IBM Plex Mono',monospace;font-size:9px;
+  letter-spacing:.05em;text-transform:uppercase;color:var(--mute);
+  margin-top:6px;line-height:1.35}
+.exo-f.bad svg{border-color:var(--signal)}
+.exo-cues{margin:13px 0 0;padding:0;list-style:none}
+.exo-cues li{position:relative;padding-left:15px;margin-bottom:7px;font-size:14.5px;line-height:1.45}
+.exo-cues li::before{content:'';position:absolute;left:0;top:8px;width:5px;height:5px;
+  border-radius:50%;background:var(--sea)}
+.exo-err{margin-top:12px;padding:10px 12px;border-left:2.5px solid var(--signal);
+  background:rgba(221,63,20,.06);font-size:13.5px;line-height:1.5}
+.exo-err .eyebrow{display:block;margin-bottom:4px;color:var(--signal)}
 
 /* fiche de seance : la valeur peut etre longue, elle passe a la ligne
    au lieu d'ecraser son libelle */
@@ -1146,7 +1182,7 @@ function drawDay(){
       <span class="clock mono">${s.h}</span>
       <${btn} class="card${(rec||w)?'':' static'}" ${clic}>
         ${rec?'<span class="open-hint">RECETTE →</span>':''}
-        ${w?'<span class="open-hint">SÉANCE →</span>':''}
+        ${w?'<span class="open-hint wopen">Ouvrir <em>→</em></span>':''}
         <span class="role">${esc(s.role)}</span>
         <span class="title">${w?esc(w.t):esc(title)}</span>
         ${w?`<span class="wcode">${esc(w.code)}</span>`:''}
@@ -2189,7 +2225,7 @@ function svDrawData(){
   $('#sv-data').innerHTML=`
   <div class="sv-head">
     <div><h3>Sauvegarde</h3></div>
-    <span class="rt">${j===null?(n?'jamais exportée':'aucune donnée'):'exportée il y a '+j+' j'}</span>
+    <span class="rt">${j===null?(n?'jamais exportée':'aucune donnée'):'exportée il y a '+j+' j'}<br>app ${APP_VER}</span>
   </div>
   ${vieux?`<div class="sv-flag" style="margin-bottom:12px">${j===null
     ? 'Tes données ne sont sauvegardées nulle part. Un changement de téléphone effacerait la courbe.'
@@ -2509,6 +2545,211 @@ document.addEventListener('change', e=>{
 });
 
 /* ============================================================
+   SCHÉMAS D'EXERCICES
+   ------------------------------------------------------------
+   Repris du fichier « Programme Renfos » : dix-sept exercices,
+   deux positions chacun, dessinés à partir de coordonnées.
+   La palette d'origine était sombre, elle a été portée sur
+   celle de l'app.
+   ============================================================ */
+const EX_SOL=136;
+const G=EX_SOL;   /* les coordonnées des exercices référencent G */ // sol
+
+function exSvg(f){
+  let s=`<svg viewBox="0 0 170 150" xmlns="http://www.w3.org/2000/svg">`;
+  // sol
+  if(f.g!==0) s+=`<line x1="8" y1="${EX_SOL}" x2="162" y2="${EX_SOL}" stroke="var(--rule)" stroke-width="2"/>`;
+  // support (chaise / caisse)
+  (f.box||[]).forEach(b=>{
+    s+=`<rect x="${b[0]}" y="${b[1]}" width="${b[2]}" height="${b[3]}" fill="none" stroke="var(--rule)" stroke-width="2"/>`;
+  });
+  // barre fixe (cercle vu de profil) + pieds
+  (f.bar||[]).forEach(b=>{
+    s+=`<circle cx="${b[0]}" cy="${b[1]}" r="4" fill="none" stroke="var(--sea)" stroke-width="2"/>`;
+    s+=`<line x1="${b[0]-14}" y1="${b[1]}" x2="${b[0]-14}" y2="${EX_SOL}" stroke="var(--rule)" stroke-width="2"/>`;
+    s+=`<line x1="${b[0]+14}" y1="${b[1]}" x2="${b[0]+14}" y2="${EX_SOL}" stroke="var(--rule)" stroke-width="2"/>`;
+  });
+  // segments secondaires (membre opposé, estompé)
+  (f.s2||[]).forEach(p=>{
+    s+=`<polyline points="${p.map(q=>q.join(',')).join(' ')}" fill="none" stroke="var(--mute)" stroke-width="3" opacity=".35" stroke-linecap="round" stroke-linejoin="round"/>`;
+  });
+  // segments principaux
+  const col=f.bad?'var(--signal)':'var(--ink)';
+  (f.s||[]).forEach(p=>{
+    s+=`<polyline points="${p.map(q=>q.join(',')).join(' ')}" fill="none" stroke="${col}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`;
+  });
+  // segment mis en valeur (le mouvement)
+  (f.hi||[]).forEach(p=>{
+    s+=`<polyline points="${p.map(q=>q.join(',')).join(' ')}" fill="none" stroke="${f.bad?'var(--signal)':'var(--signal)'}" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+  });
+  // tête
+  if(f.h) s+=`<circle cx="${f.h[0]}" cy="${f.h[1]}" r="8" fill="none" stroke="${col}" stroke-width="4"/>`;
+  // haltères
+  (f.db||[]).forEach(d=>{
+    s+=`<rect x="${d[0]-3}" y="${d[1]-9}" width="6" height="18" rx="1.5" fill="var(--sea)"/>`;
+  });
+  // charge sur les hanches (barre EZ)
+  (f.ez||[]).forEach(d=>{
+    s+=`<rect x="${d[0]-11}" y="${d[1]-3}" width="22" height="6" rx="2" fill="var(--sea)"/>`;
+  });
+  // sac lesté
+  (f.bag||[]).forEach(b=>{
+    s+=`<rect x="${b[0]}" y="${b[1]}" width="30" height="22" rx="3" fill="none" stroke="var(--sea)" stroke-width="3"/>`;
+  });
+  // flèche de direction
+  (f.ar||[]).forEach(a=>{
+    s+=`<line x1="${a[0]}" y1="${a[1]}" x2="${a[2]}" y2="${a[3]}" stroke="var(--signal)" stroke-width="2.5"/>`;
+    const dx=a[2]-a[0],dy=a[3]-a[1],L=Math.hypot(dx,dy)||1,ux=dx/L,uy=dy/L;
+    const px=-uy,py=ux;
+    s+=`<polygon points="${a[2]},${a[3]} ${a[2]-ux*9+px*5},${a[3]-uy*9+py*5} ${a[2]-ux*9-px*5},${a[3]-uy*9-py*5}" fill="var(--signal)"/>`;
+  });
+  return s+`</svg>`;
+}
+
+/* ───────── données ───────── */
+
+const EXO=[
+/* ============ SÉANCE A ============ */
+{f:'A',n:1,nm:'Rowing inversé',reps:'4 × 8-12',star:0,
+ fr:[
+  {l:'Départ — bras tendus',p:{bar:[[75,74]],s:[[[75,110],[105,116],[125,119],[141,G]]],hi:[[[75,110],[75,94],[75,80]]],h:[68,108],g:1}},
+  {l:'Arrivée — sternum à la barre',p:{bar:[[75,74]],s:[[[75,92],[105,102],[125,110],[141,G]]],hi:[[[75,92],[90,94],[75,80]]],h:[68,90],g:1}}
+ ],
+ cues:['Barre EZ en travers de deux chaises, dossiers calés contre un mur.','Corps en planche du talon à la tête — ne casse pas les hanches.','Tire le sternum vers la barre, pas le menton.','Plus tes pieds sont loin, plus c\'est dur. C\'est ton réglage.'],
+ err:'Tester le montage à vide avant de passer dessous. Pousse fort sur la barre : si une chaise bouge, tu changes de solution.'},
+
+{f:'A',n:2,nm:'Pompes déclinées sur poignées',reps:'4 × 8-12',star:1,
+ fr:[
+  {l:'Départ — haut',p:{box:[[18,96,34,40]],s:[[[35,96],[62,104],[88,110],[116,118]]],hi:[[[116,118],[120,126],[122,132]]],h:[128,120],g:1}},
+  {l:'Arrivée — poitrine sous les mains',p:{box:[[18,96,34,40]],s:[[[35,96],[62,108],[88,116],[116,127]]],hi:[[[116,127],[130,126],[122,132]]],h:[128,129],g:1}}
+ ],
+ cues:['Pieds sur une chaise, mains sur les poignées.','Les poignées te donnent l\'amplitude sous la ligne des mains — c\'est tout l\'intérêt. Descends vraiment.','3 secondes à la descente, remontée normale.','Coudes à 45° du corps, pas écartés à 90°.'],
+ err:'Descendre à moitié. Sans l\'amplitude basse, tu perds exactement la portion qui reproduit l\'enfoncement du nez de planche.'},
+
+{f:'A',n:3,nm:'Pullover haltère au sol',reps:'4 × 12',star:1,
+ fr:[
+  {l:'Départ — haltère derrière la tête',p:{s:[[[62,124],[100,126]],[[100,126],[114,104],[118,131]]],hi:[[[62,124],[46,120],[30,124]]],h:[50,124],db:[[30,124]],g:1}},
+  {l:'Arrivée — au-dessus de la poitrine',p:{s:[[[62,124],[100,126]],[[100,126],[114,104],[118,131]]],hi:[[[62,124],[64,104],[68,86]]],h:[50,124],db:[[68,86]],g:1}}
+ ],
+ cues:['C\'est L\'exercice pour le piqué de nez : bras allongés, force vers le bas et vers l\'arrière.','Coude légèrement plié et FIGÉ pendant tout le mouvement.','Descente en 3 secondes jusqu\'à ce que l\'haltère effleure le sol.','Lombaires plaquées au sol, côtes basses — genoux fléchis pour ça.'],
+ err:'Plier les coudes en remontant. Ça devient un tirage bras fléchis et tu perds le vecteur exact du duck-dive.'},
+
+{f:'A',n:4,nm:'Rowing haltère unilatéral',reps:'4 × 10 / bras',star:0,
+ fr:[
+  {l:'Départ — bras tendu',p:{box:[[26,100,30,36]],s:[[[56,88],[95,95]],[[95,95],[100,115],[97,G]],[[56,88],[46,100]]],hi:[[[59,90],[62,110],[63,128]]],h:[45,84],db:[[63,128]],g:1}},
+  {l:'Arrivée — coude au-dessus du dos',p:{box:[[26,100,30,36]],s:[[[56,88],[95,95]],[[95,95],[100,115],[97,G]],[[56,88],[46,100]]],hi:[[[59,90],[74,90],[63,104]]],h:[45,84],db:[[63,104]],g:1}}
+ ],
+ cues:['Main libre en appui sur la chaise, dos parallèle au sol.','Tire le coude vers la hanche, pas vers l\'épaule.','Épaule qui descend et recule à la fin — pense « range l\'omoplate ».','Le buste ne tourne pas.'],
+ err:'Faire tourner le buste pour arracher la charge. Tu travailles les obliques au lieu du dos.'},
+
+{f:'A',n:5,nm:'Développé haltères au sol',reps:'3 × 10',star:0,
+ fr:[
+  {l:'Départ — coudes au sol',p:{s:[[[68,122],[104,124]],[[104,124],[116,104],[120,130]]],hi:[[[68,122],[56,132],[62,112]]],h:[56,122],db:[[62,112]],g:1}},
+  {l:'Arrivée — bras tendus',p:{s:[[[68,122],[104,124]],[[104,124],[116,104],[120,130]]],hi:[[[68,122],[66,104],[68,86]]],h:[56,122],db:[[68,86]],g:1}}
+ ],
+ cues:['Le sol limite la descente — c\'est une sécurité pour l\'épaule, pas un défaut.','Marque une pause d\'une seconde coudes au sol, sans rebondir.','Poignets alignés sur les avant-bras.'],
+ err:'Rebondir les coudes sur le sol pour relancer. Tu perds le travail et tu abîmes le coude.'},
+
+{f:'A',n:6,nm:'Renegade row',reps:'3 × 8 / bras',star:0,
+ fr:[
+  {l:'Départ — planche',p:{s:[[[62,114],[98,120],[118,126],[140,G]]],hi:[[[62,114],[62,126],[62,132]]],s2:[[[62,114],[68,126],[70,132]]],h:[50,116],db:[[62,132]],g:1}},
+  {l:'Arrivée — un haltère tiré',p:{s:[[[62,114],[98,120],[118,126],[140,G]]],hi:[[[62,114],[76,104],[66,116]]],s2:[[[62,114],[68,126],[70,132]]],h:[50,116],db:[[66,116]],g:1}}
+ ],
+ cues:['Pieds écartés largeur d\'épaules ou plus — c\'est ce qui empêche le bassin de tourner.','Les hanches restent parfaitement à plat pendant la traction.','Alterne un bras après l\'autre.'],
+ err:'Le bassin qui pivote à chaque traction. Écarte davantage les pieds ou allège.'},
+
+{f:'A',n:7,nm:'Y-T-W au sol',reps:'3 × 8 par position',star:1,
+ fr:[
+  {l:'Position Y',p:{s:[[[60,122],[104,126],[124,128],[140,130]]],hi:[[[60,122],[47,110],[34,101]]],h:[48,120],g:1}},
+  {l:'Position W',p:{s:[[[60,122],[104,126],[124,128],[140,130]]],hi:[[[60,122],[72,107],[57,99]]],h:[48,120],g:1}}
+ ],
+ cues:['Allongé sur le ventre. Y = bras en diagonale vers le haut. T = bras écartés sur les côtés. W = coudes pliés tirés en arrière.','Décolle buste ET bras du sol, 2 secondes de maintien par répétition.','Sans charge, ou 1 à 2 kg maximum. Ce n\'est pas un exercice de force.','Menton rentré, regard vers le sol — la nuque reste dans l\'axe.'],
+ err:'Le sauter parce que c\'est léger et laid. C\'est ce qui décide si tes épaules tiennent après 300 m de rame.'},
+
+/* ============ SÉANCE B ============ */
+{f:'B',n:1,nm:'Pont fessier lesté',reps:'4 × 12',star:0,
+ fr:[
+  {l:'Départ — bassin bas',p:{box:[[104,100,38,36]],s:[[[56,126],[86,124]],[[86,124],[106,98],[120,100]]],h:[44,127],ez:[[86,120]],g:1}},
+  {l:'Arrivée — hanches en extension',p:{box:[[104,100,38,36]],s:[[[56,120],[86,100]],[[86,100],[106,94],[120,100]]],h:[44,122],ez:[[86,96]],g:1}}
+ ],
+ cues:['Pieds sur une chaise, barre EZ sur le pli des hanches (mets une serviette, ça fait mal).','Pousse par les talons, serre les fessiers 1 seconde en haut.','Côtes basses — l\'extension vient de la hanche, pas des lombaires.'],
+ err:'Cambrer le bas du dos pour monter plus haut. Tu déplaces le travail des fessiers vers les lombaires.'},
+
+{f:'B',n:2,nm:'Soulevé de terre roumain',reps:'4 × 12',star:0,
+ fr:[
+  {l:'Départ — debout',p:{s:[[[76,54],[76,86]],[[76,86],[76,110],[76,G]]],hi:[[[76,56],[76,72],[76,90]]],h:[76,42],db:[[76,90]],g:1}},
+  {l:'Arrivée — bassin reculé',p:{s:[[[52,94],[82,86]],[[82,86],[84,110],[80,G]]],hi:[[[52,96],[51,108],[53,120]]],h:[40,98],db:[[53,120]],ar:[[100,84,112,84]],g:1}}
+ ],
+ cues:['Le mouvement, c\'est le BASSIN QUI RECULE — pas le buste qui descend.','Genoux légèrement fléchis et immobiles pendant toute la série.','Haltères qui frôlent les cuisses, descente jusqu\'à mi-tibia.','Tu dois sentir un étirement net à l\'arrière des cuisses. Si tu ne le sens pas, tu plies les genoux.'],
+ err:'Arrondir le dos en bas. Descends moins bas plutôt que de perdre le dos plat — surtout avec ton historique.'},
+
+{f:'B',n:3,nm:'Fentes bulgares',reps:'3 × 10 / jambe',star:0,
+ fr:[
+  {l:'Départ — haut',p:{box:[[112,98,34,38]],s:[[[80,52],[80,82]],[[80,82],[70,106],[70,G]]],s2:[[[80,82],[100,94],[120,98]]],hi:[[[80,54],[80,72],[80,90]]],h:[80,40],db:[[80,90]],g:1}},
+  {l:'Arrivée — genou arrière bas',p:{box:[[112,98,34,38]],s:[[[80,72],[80,100]],[[80,100],[68,112],[70,G]]],s2:[[[80,100],[104,118],[120,98]]],hi:[[[80,74],[80,92],[80,110]]],h:[80,60],db:[[80,110]],g:1}}
+ ],
+ cues:['Pied arrière posé sur la chaise, cou-de-pied ou pointe, comme tu préfères.','Buste vertical, descente droite vers le bas.','Le genou avant reste au-dessus du pied, pas de dérive vers l\'intérieur.','Un haltère dans chaque main, bras relâchés.'],
+ err:'Chercher l\'équilibre pendant toute la série. Pose une main sur un mur les premières semaines, tu progresseras plus vite.'},
+
+{f:'B',n:4,nm:'Relevé sol → debout explosif',reps:'4 × 6',star:1,
+ fr:[
+  {l:'Départ — à plat ventre',p:{s:[[[58,124],[100,128],[120,130],[138,131]]],hi:[[[58,124],[58,131],[62,133]]],h:[46,122],ar:[[80,100,80,84]],g:1}},
+  {l:'Arrivée — debout',p:{s:[[[80,54],[80,88]],[[80,88],[80,112],[80,G]]],hi:[[[80,56],[78,74],[76,90]]],h:[80,42],g:1}}
+ ],
+ cues:['C\'est une sortie d\'eau à sec. Vitesse, pas force.','Mains sous les épaules, tu pousses et tu ramènes les pieds sous toi d\'un coup.','6 répétitions MAXIMUM. Dès que ça ralentit, la série est finie.','Chronomètre-toi une fois par mois — c\'est parlant.'],
+ err:'En faire une série longue « pour le cardio ». Ce n\'est pas un burpee : c\'est un exercice de vitesse et il ne vaut rien fatigué.'},
+
+{f:'B',n:5,nm:'Get-up simplifié',reps:'3 × 4 / côté',star:1,
+ fr:[
+  {l:'Départ — allongé, bras vertical',p:{s:[[[62,124],[100,124]],[[100,124],[114,104],[117,131]]],hi:[[[62,124],[64,104],[66,86]]],h:[50,124],db:[[66,86]],g:1}},
+  {l:'Arrivée — debout, charge au-dessus',p:{s:[[[80,56],[80,90]],[[80,90],[80,112],[80,G]]],hi:[[[80,56],[80,40],[80,24]]],h:[80,44],db:[[80,24]],g:1}}
+ ],
+ cues:['Le meilleur exercice pour « avoir confiance en mon corps » : tu contrôles ta position dans l\'espace sous charge.','Le bras chargé reste VERTICAL et immobile du début à la fin.','Regarde l\'haltère pendant toute la montée.','Commence à 4-6 kg. Redescends par le même chemin.'],
+ err:'Chercher la charge avant d\'avoir l\'enchaînement. Regarde une vidéo une fois, puis fais-le léger pendant trois semaines.'},
+
+{f:'B',n:6,nm:'Curl marteau',reps:'4 × 10',star:1,
+ fr:[
+  {l:'Départ — bras long',p:{s:[[[75,56],[75,88]],[[75,88],[75,112],[75,G]]],hi:[[[75,56],[75,74],[73,92]]],h:[75,44],db:[[73,92]],g:1}},
+  {l:'Arrivée — prise neutre',p:{s:[[[75,56],[75,88]],[[75,88],[75,112],[75,G]]],hi:[[[75,56],[76,74],[62,62]]],h:[75,44],db:[[62,62]],g:1}}
+ ],
+ cues:['Paumes face à face — c\'est exactement la prise Rautek sur l\'avant-bras d\'une victime.','Cette prise recrute le brachial et le brachio-radial, les vrais fléchisseurs sous charge lourde.','Coudes collés au corps, buste immobile.','Alterne avec du curl barre EZ prise serrée une semaine sur deux.'],
+ err:'Balancer le buste pour lancer la charge. Si tu dois tricher, l\'haltère est trop lourd.'},
+
+{f:'B',n:7,nm:'Isométrie de traction',reps:'3 × 40 s',star:1,
+ fr:[
+  {l:'Correct — coudes verrouillés à 90°',p:{s:[[[85,58],[78,90]],[[78,90],[80,112],[77,G]]],hi:[[[85,60],[89,80],[68,80]]],h:[89,44],db:[[68,80]],g:1}},
+  {l:'Correct — vue du placement',p:{s:[[[85,58],[78,90]],[[78,90],[80,112],[77,G]]],hi:[[[85,60],[89,80],[68,80]]],h:[89,44],db:[[68,80]],ar:[[52,80,36,80]],g:1}},
+  {l:'Erreur — bras qui curlent',bad:1,p:{s:[[[70,58],[76,90]],[[76,90],[80,112],[77,G]]],hi:[[[70,60],[74,78],[62,62]]],h:[62,46],db:[[62,62]],g:1}}
+ ],
+ cues:['L\'exercice le plus spécifique de tout le programme pour la traction de victime.','Un haltère lourd dans chaque main, coudes bloqués à 90° et immobiles.','Épaules basses et serrées en arrière, buste légèrement incliné vers l\'arrière.','Tu tiens 40 secondes. Monte la charge dès que tu tiens 50 s proprement.'],
+ err:'Fléchir et étendre les bras. En prise Rautek les coudes ne bougent JAMAIS — ils tiennent. Curler 75 kg ne marche pas et t\'épuise en dix secondes.'},
+
+{f:'B',n:8,nm:'Traîné en marche arrière',reps:'4 × 20 m',star:1,
+ fr:[
+  {l:'Traction, marche arrière',p:{s:[[[62,62],[70,92]],[[70,92],[72,114],[68,G]]],hi:[[[62,64],[76,80],[92,92]]],h:[58,50],bag:[[96,112]],ar:[[42,74,26,74]],g:1}},
+  {l:'Erreur — buste penché en avant',bad:1,p:{s:[[[86,70],[74,94]],[[74,94],[74,114],[70,G]]],hi:[[[86,72],[96,86],[104,98]]],h:[95,60],bag:[[108,112]],g:1}}
+ ],
+ cues:['Sac de sport chargé de disques, sol lisse — parquet, lino, couloir.','Coudes verrouillés, buste incliné EN ARRIÈRE, tu recules par les jambes.','Les bras sont un crochet. Les jambes sont le moteur.','Sans place : escaliers de l\'immeuble, ou maintien statique 45 s avec un seul haltère très lourd d\'un côté.'],
+ err:'Se pencher en avant et tirer avec le haut du corps. Tu perds la puissance des jambes et tu charges les lombaires.'},
+
+{f:'B',n:9,nm:'Gainage latéral',reps:'3 × 30 s / côté',star:0,
+ fr:[
+  {l:'Position tenue',p:{s:[[[52,110],[90,118],[112,124],[135,131]]],hi:[[[52,110],[46,124],[46,131]]],h:[46,100],g:1}}
+ ],
+ cues:['Coude sous l\'épaule, corps en ligne du talon à la tête.','Hanche haute — pense « pousse le sol avec le coude ».','Respire normalement pendant les 30 secondes.'],
+ err:'Laisser la hanche descendre progressivement. Mieux vaut 20 s propres que 45 s affaissées.'},
+
+{f:'B',n:10,nm:'Rotations externes',reps:'3 × 15',star:0,
+ fr:[
+  {l:'Départ — main vers le ventre',p:{s:[[[78,58],[78,90]],[[78,90],[78,112],[78,G]]],hi:[[[78,60],[78,80],[64,80]]],h:[78,46],db:[[64,80]],g:1}},
+  {l:'Arrivée — main écartée',p:{s:[[[78,58],[78,90]],[[78,90],[78,112],[78,G]]],hi:[[[78,60],[78,80],[98,78]]],h:[78,46],db:[[98,78]],g:1}}
+ ],
+ cues:['Coude collé au corps, plié à 90°, il ne bouge pas.','Seul l\'avant-bras tourne vers l\'extérieur.','Très léger : 2 à 4 kg. Ce n\'est pas un exercice de force.','Trois minutes par semaine. Le meilleur ratio prévention / temps de tout le programme.'],
+ err:'Décoller le coude du corps. Roule une serviette et coince-la sous le coude, ça règle le problème.'}
+];
+
+
+/* ============================================================
    ENTRAÎNEMENT — phases, bibliothèque de séances, fiche
    ------------------------------------------------------------
    L'app connaît la date, donc elle sert la bonne version de
@@ -2612,24 +2853,14 @@ const W = {
   bloc:[['Échauffement','15 min'],['Navettes 20 m','structure Luc Léger progressive'],['Retour au calme','10 min']]},
 
 /* ---- musculation ---- */
-'R-A':{code:'R-A',t:'Renfo A — poussée',type:'Musculation',dur:'50 min',garmin:'R-A',
-  intro:"Poussée, haut du corps, verticalité. Matériel : haltères réglables, barre EZ, poignées de pompe.",
-  bloc:[['Pompes déclinées sur poignées','4 × 10'],['Développé militaire haltères','4 × 8'],
-        ['Pullover haltère au sol','4 × 12'],['Floor press haltères','3 × 10'],
-        ['Élévations latérales','3 × 12'],['Gainage anti-rotation','3 × 30 s / côté'],
-        ['Mollets debout jambes tendues','3 × 20 · prophylaxie'],
-        ['Rotations externes élastique','3 × 15 · prophylaxie']],
+'R-A':{code:'R-A',t:'Renfo A — haut du corps',type:'Musculation',dur:'50 min',garmin:'R-A',fam:'A',
+  intro:"Poussée et tirage. Le rowing inversé ouvre la séance : c'est le mouvement le plus proche de la traction de victime, et il demande un dos frais.",
+  bloc:EXO.filter(e=>e.f==='A').map(e=>[e.nm, e.reps]),
   note:"Aucune douche froide ni bain froid ce soir. L'immersion froide post-musculation émousse les adaptations de force."},
 
-'R-B':{code:'R-B',t:'Renfo B — tirage',type:'Musculation',dur:'50 min',garmin:'R-B',
-  intro:"Tirage, chaîne postérieure, explosivité. Les relevés et le get-up sont en premier volontairement : ils demandent un système nerveux frais.",
-  bloc:[['Relevés sol-debout explosifs','5 × 6'],['Turkish get-up','3 × 3 / côté'],
-        ['Soulevé de terre roumain','4 × 10'],['Rowing haltère unilatéral','4 × 10'],
-        ['Rowing buste penché EZ','3 × 12'],['Split squat sur marche','3 × 10 / jambe'],
-        ['Pont fessier une jambe','3 × 12'],['Curl marteau','3 × 12'],
-        ['Isométrie coudes 90°','3 × 40 s'],
-        ['Soléaire en fente','3 × 15 / jambe · prophylaxie'],
-        ['Y-T-W au sol','2 × 10 · prophylaxie']],
+'R-B':{code:'R-B',t:'Renfo B — bas et postérieur',type:'Musculation',dur:'50 min',garmin:'R-B',fam:'B',
+  intro:"Chaîne postérieure, explosivité, préhension. Les relevés et le get-up sont en premier volontairement : ils demandent un système nerveux frais.",
+  bloc:EXO.filter(e=>e.f==='B').map(e=>[e.nm, e.reps]),
   note:"Aucune douche froide ni bain froid ce soir. Sur Garmin, les mouvements unilatéraux ont leurs séries doublées — tu alternes manuellement."},
 
 'R-PPG':{code:'R-PPG',t:'Circuit spécifique',type:'Musculation',dur:'35 min',garmin:'R-PPG',
@@ -2672,6 +2903,10 @@ const W = {
         ['Sable','10 min facile']],
   note:"Arriver affûté trois jours trop tôt ne coûte presque rien ; l'inverse, oui."}
 };
+
+/* index des exercices par libellé, pour relier le déroulé aux schémas */
+const EXO_IDX=(()=>{const m={};EXO.forEach(e=>{m[e.f+'|'+e.nm]=e;});return m;})();
+function exoDe(fam,nom){ return EXO_IDX[fam+'|'+nom]||null; }
 
 /* ---------- moteur ---------- */
 function wIso(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
@@ -2760,9 +2995,20 @@ function openSeance(i){
       <div class="origin"><span class="mark">SUR LA MONTRE</span><span>${esc(w.garmin)}</span></div>
       ${w.intro?`<p style="margin:14px 0 0;font-size:15px;color:var(--mute)">${esc(w.intro)}</p>`:''}
       <h4>Déroulé</h4>
-      ${w.bloc.map(b=>{
+      ${w.bloc.map((b,bi)=>{
         const pro=/prophylaxie/.test(b[1]);
-        return `<div class="wrow${pro?' pro':''}"><span class="l">${esc(b[0])}</span><span class="q">${esc(b[1])}</span></div>`;
+        const e=w.fam?exoDe(w.fam,b[0]):null;
+        if(!e) return `<div class="wrow${pro?' pro':''}"><span class="l">${esc(b[0])}</span><span class="q">${esc(b[1])}</span></div>`;
+        return `<div class="exo" data-exo="${bi}">
+          <button class="wrow exo-h"><span class="l">${esc(b[0])}</span>
+            <span class="q">${esc(b[1])}</span><span class="exo-c">voir</span></button>
+          <div class="exo-b">
+            <div class="exo-fr">${e.fr.map(f=>
+              `<figure class="exo-f${f.bad?' bad':''}">${exSvg(Object.assign({},f.p,{bad:f.bad}))}
+                <figcaption>${esc(f.l)}</figcaption></figure>`).join('')}</div>
+            <ul class="exo-cues">${e.cues.map(c=>`<li>${c}</li>`).join('')}</ul>
+            ${e.err?`<div class="exo-err"><span class="eyebrow">L'erreur</span>${e.err}</div>`:''}
+          </div></div>`;
       }).join('')}
       ${w.note?`<div class="tip"><span class="eyebrow">À savoir</span>${esc(w.note)}</div>`:''}
     </div>`;
@@ -2828,6 +3074,11 @@ function exportAgenda(){
    La rampe ne touche que le matin : le reste de la journée est
    déjà mangeable aujourd'hui.
    ============================================================ */
+
+/* Version du fichier. Sert uniquement à vérifier quelle build
+   tourne réellement sur le téléphone, le cache du service worker
+   pouvant servir une version antérieure. */
+const APP_VER = 'v19';
 
 const RAMPE_DEBUT = '2026-08-31';       // lundi 31 août 2026
 
@@ -3043,6 +3294,8 @@ document.addEventListener('click',e=>{
   const day=e.target.closest('.daybtn');
   if(day){cur=+day.dataset.i;drawDays();drawDay();return}
   if(e.target.closest('#bk')){goBack();return}
+  const xh=e.target.closest('.exo-h');
+  if(xh){ xh.parentElement.classList.toggle('open'); return }
   if(e.target.closest('[data-seance]')){openSeance(cur);return}
   const rec=e.target.closest('[data-rec]');
   if(rec){
