@@ -586,16 +586,26 @@ button.ing:focus-visible{outline:2px solid var(--signal);outline-offset:1px}
 .sv-conseil .c-note{margin-top:9px;font-size:11.5px;color:var(--rule);
   font-family:'IBM Plex Mono',monospace;letter-spacing:.03em}
 
-/* exercice depliable dans la fiche de seance */
+/* exercice depliable dans la fiche de seance.
+   La mention « voir » en capitales grises ne se lisait pas comme un
+   bouton : la vignette du schema la remplace. */
 .exo{border-bottom:1px solid rgba(195,204,196,.55)}
 .exo:last-of-type{border-bottom:0}
-.exo-h{width:100%;background:none;border:0;border-bottom:0;cursor:pointer;
-  text-align:left;font:inherit;color:inherit;padding:9px 0}
-.exo-c{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;
-  text-transform:uppercase;color:var(--sea);flex:none;margin-left:10px}
-.exo.open .exo-c{color:var(--mute)}
-.exo.open .exo-c::after{content:''}
-.exo-b{display:none;padding:2px 0 16px}
+.exo-h{width:100%;display:flex;align-items:center;gap:12px;
+  background:none;border:0;cursor:pointer;text-align:left;font:inherit;
+  color:inherit;padding:10px 0;min-height:60px}
+.exo-v{flex:none;width:52px;height:46px;border-radius:3px;overflow:hidden;
+  background:var(--fog);border:1px solid var(--rule);display:block}
+.exo-v svg{width:100%;height:100%;display:block}
+.exo-t{flex:1;min-width:0;display:block}
+.exo-n{display:block;font-size:15px;line-height:1.25}
+.exo-r{display:block;font-family:'IBM Plex Mono',monospace;font-size:12px;
+  color:var(--mute);margin-top:3px}
+.exo-c{flex:none;width:9px;height:9px;border-right:1.8px solid var(--sea);
+  border-bottom:1.8px solid var(--sea);transform:rotate(45deg);
+  transition:transform .18s;margin-right:3px}
+.exo.open .exo-c{transform:rotate(-135deg)}
+.exo-b{display:none;padding:0 0 16px}
 .exo.open .exo-b{display:block}
 .exo-fr{display:flex;gap:10px}
 .exo-f{flex:1;min-width:0;margin:0}
@@ -2999,9 +3009,15 @@ function openSeance(i){
         const pro=/prophylaxie/.test(b[1]);
         const e=w.fam?exoDe(w.fam,b[0]):null;
         if(!e) return `<div class="wrow${pro?' pro':''}"><span class="l">${esc(b[0])}</span><span class="q">${esc(b[1])}</span></div>`;
+        /* vignette de la position d'arrivée : le schéma est visible
+           sans rien toucher, donc on sait qu'il y a quelque chose */
+        const vig=e.fr[e.fr.length-1];
         return `<div class="exo" data-exo="${bi}">
-          <button class="wrow exo-h"><span class="l">${esc(b[0])}</span>
-            <span class="q">${esc(b[1])}</span><span class="exo-c">voir</span></button>
+          <button class="exo-h">
+            <span class="exo-v">${exSvg(Object.assign({},vig.p,{bad:vig.bad}))}</span>
+            <span class="exo-t"><span class="exo-n">${esc(b[0])}</span>
+              <span class="exo-r">${esc(b[1])}</span></span>
+            <span class="exo-c" aria-hidden="true"></span></button>
           <div class="exo-b">
             <div class="exo-fr">${e.fr.map(f=>
               `<figure class="exo-f${f.bad?' bad':''}">${exSvg(Object.assign({},f.p,{bad:f.bad}))}
@@ -3078,7 +3094,7 @@ function exportAgenda(){
 /* Version du fichier. Sert uniquement à vérifier quelle build
    tourne réellement sur le téléphone, le cache du service worker
    pouvant servir une version antérieure. */
-const APP_VER = 'v19';
+const APP_VER = 'v20';
 
 const RAMPE_DEBUT = '2026-08-31';       // lundi 31 août 2026
 
